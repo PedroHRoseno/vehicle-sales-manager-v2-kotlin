@@ -14,7 +14,6 @@ import java.util.Date
 @RestController
 @RequestMapping("/reports")
 @Tag(name = "Relatórios", description = "API para relatórios financeiros e dashboard")
-@CrossOrigin(origins = ["http://localhost:3000"])
 class FinancialReportController(
     private val financialReportService: FinancialReportService
 ) {

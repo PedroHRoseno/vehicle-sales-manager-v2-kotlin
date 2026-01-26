@@ -112,7 +112,28 @@ Todos os endpoints de listagem suportam paginação via Spring `Pageable`:
 
 Exemplo: `GET /sales?page=0&size=20&sort=saleDate,desc&search=ABC1234`
 
-## Executando o Projeto
+## Deploy no Railway
+
+A aplicação está preparada para deploy no Railway. Veja o arquivo `DEPLOY.md` para instruções detalhadas.
+
+### Arquivos de Deploy
+
+- `Dockerfile`: Dockerfile multi-stage otimizado para produção
+- `.dockerignore`: Arquivos ignorados no build Docker
+- `railway.json`: Configuração do Railway (opcional)
+- `DEPLOY.md`: Guia completo de deploy
+
+### Variáveis de Ambiente no Railway
+
+Configure as seguintes variáveis de ambiente:
+
+- `SPRING_DATASOURCE_URL`: URL do banco PostgreSQL
+- `SPRING_DATASOURCE_USERNAME`: Usuário do banco
+- `SPRING_DATASOURCE_PASSWORD`: Senha do banco
+- `CORS_ALLOWED_ORIGINS`: Origens permitidas para CORS (ex: `https://seu-frontend.com`)
+- `PORT`: Porta do servidor (Railway define automaticamente)
+
+## Executando o Projeto Localmente
 
 ### Pré-requisitos
 

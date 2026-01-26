@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*
  */
 @RestController
 @Tag(name = "Compatibilidade", description = "Endpoints de compatibilidade com versões antigas do front-end")
-@CrossOrigin(origins = ["http://localhost:3000"])
 class CompatibilityController(
     private val partnerService: PartnerService,
     private val exchangeService: ExchangeService

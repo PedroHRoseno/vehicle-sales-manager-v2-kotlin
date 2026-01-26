@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/sales")
 @Tag(name = "Vendas", description = "API para gerenciamento de vendas")
-@CrossOrigin(origins = ["http://localhost:3000"])
 class SaleController(
     private val saleService: SaleService
 ) {

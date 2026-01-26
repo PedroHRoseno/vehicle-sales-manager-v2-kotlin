@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/purchases")
 @Tag(name = "Compras", description = "API para gerenciamento de compras")
-@CrossOrigin(origins = ["http://localhost:3000"])
 class PurchaseController(
     private val purchaseService: PurchaseService
 ) {

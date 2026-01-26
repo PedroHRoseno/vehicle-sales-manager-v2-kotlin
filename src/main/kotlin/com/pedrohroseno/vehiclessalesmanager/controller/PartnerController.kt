@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/partners")
 @Tag(name = "Parceiros", description = "API para gerenciamento de parceiros (clientes e fornecedores)")
-@CrossOrigin(origins = ["http://localhost:3000"])
 class PartnerController(
     private val partnerService: PartnerService
 ) {
