@@ -1,0 +1,37 @@
+{
+  "_README": "Este é um arquivo de exemplo. Duas opções de configuração:",
+  "_OPCAO_1": "Usar referências às variáveis PG* do Railway (se PostgreSQL estiver no mesmo projeto)",
+  "_OPCAO_2": "Usar valores diretos copiados do serviço PostgreSQL",
+  "_INSTRUCOES": [
+    "OPÇÃO 1 (Recomendado - se PostgreSQL no mesmo projeto):",
+    "  - Use as referências ${PGHOST}, ${PGUSER}, etc.",
+    "  - O Railway resolverá automaticamente",
+    "",
+    "OPÇÃO 2 (Se referências não funcionarem):",
+    "  1. No Railway, vá no serviço PostgreSQL → Variables",
+    "  2. Copie os valores REAIS de PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE",
+    "  3. Substitua as referências ${...} pelos valores reais",
+    "  4. No serviço da aplicação → Variables → Raw Editor",
+    "  5. Cole este JSON editado e salve"
+  ],
+  
+  "_OPCAO_1_REFERENCIAS": {
+    "SPRING_DATASOURCE_URL": "jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE}",
+    "SPRING_DATASOURCE_USERNAME": "${PGUSER}",
+    "SPRING_DATASOURCE_PASSWORD": "${PGPASSWORD}",
+    "CORS_ALLOWED_ORIGINS": "https://seu-frontend.vercel.app",
+    "SPRING_JPA_HIBERNATE_DDL_AUTO": "update",
+    "SPRING_JPA_SHOW_SQL": "false",
+    "SPRING_JPA_FORMAT_SQL": "false"
+  },
+  
+  "_OPCAO_2_VALORES_DIRETOS": {
+    "SPRING_DATASOURCE_URL": "jdbc:postgresql://containers-us-west-123.railway.app:5432/railway",
+    "SPRING_DATASOURCE_USERNAME": "postgres",
+    "SPRING_DATASOURCE_PASSWORD": "sua_senha_aqui",
+    "CORS_ALLOWED_ORIGINS": "https://seu-frontend.vercel.app",
+    "SPRING_JPA_HIBERNATE_DDL_AUTO": "update",
+    "SPRING_JPA_SHOW_SQL": "false",
+    "SPRING_JPA_FORMAT_SQL": "false"
+  }
+}

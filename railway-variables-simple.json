@@ -1,0 +1,10 @@
+{
+  "_INSTRUCOES": "OPÇÃO MAIS SIMPLES: Se PostgreSQL estiver no mesmo projeto Railway, você pode NÃO definir SPRING_DATASOURCE_* e deixar o Spring usar PG* automaticamente",
+  "_COMO_FUNCIONA": "O application.properties já está configurado para usar PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE automaticamente se SPRING_DATASOURCE_* não existir",
+  "_VANTAGEM": "Não precisa copiar valores manualmente - o Railway compartilha as variáveis PG* automaticamente entre serviços do mesmo projeto",
+  
+  "CORS_ALLOWED_ORIGINS": "https://almotos-front-4vrq3ihce-pedrohrosenos-projects.vercel.app",
+  "SPRING_JPA_HIBERNATE_DDL_AUTO": "update",
+  "SPRING_JPA_SHOW_SQL": "false",
+  "SPRING_JPA_FORMAT_SQL": "false"
+}

@@ -1,0 +1,13 @@
+{
+  "_OPCAO_1": "Se PostgreSQL estiver no mesmo projeto Railway, você pode NÃO definir SPRING_DATASOURCE_* e deixar o Spring usar PG* diretamente",
+  "_OPCAO_2": "Ou defina SPRING_DATASOURCE_* com valores diretos copiados do serviço PostgreSQL",
+  "_NOTA": "O application.properties já está configurado para usar PG* como fallback automaticamente",
+  
+  "SPRING_DATASOURCE_URL": "jdbc:postgresql://postgres.railway.internal:5432/railway",
+  "SPRING_DATASOURCE_USERNAME": "postgres",
+  "SPRING_DATASOURCE_PASSWORD": "sWpRqXogcHWaUXDDWTRzEDxbniMrOUKs",
+  "CORS_ALLOWED_ORIGINS": "https://almotos-front-4vrq3ihce-pedrohrosenos-projects.vercel.app",
+  "SPRING_JPA_HIBERNATE_DDL_AUTO": "update",
+  "SPRING_JPA_SHOW_SQL": "false",
+  "SPRING_JPA_FORMAT_SQL": "false"
+}
