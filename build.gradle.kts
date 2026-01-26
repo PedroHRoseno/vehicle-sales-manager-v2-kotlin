@@ -41,7 +41,14 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-// Task para criar JAR executável
+// Configuração do bootJar para gerar JAR executável com nome fixo
 tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
     archiveFileName.set("app.jar")
+    // Garante que o JAR seja executável (fat JAR com todas as dependências)
+    enabled = true
+}
+
+// Desabilita a task jar normal para evitar gerar JAR não-executável
+tasks.named<Jar>("jar") {
+    enabled = false
 }
