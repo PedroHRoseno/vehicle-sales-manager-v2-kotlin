@@ -35,38 +35,63 @@ FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
-# Create non-root user
-RUN addgroup -S spring && adduser -S spring -G spring
-USER spring:spring
+# Copy the entire build/libs directory from build stage
+# This ensures we get all JARs even if the name doesn't match our expectations
+COPY --from=build /app/build/libs /tmp/libs
 
-# Copy all JARs from build stage to a temp location first
-COPY --from=build /app/build/libs/*.jar /tmp/libs/
-
-# Select the correct JAR (app.jar from bootJar, or fallback to -SNAPSHOT.jar)
-# The bootJar task is configured to generate "app.jar" in build.gradle.kts
-RUN echo "=== JARs disponíveis em /tmp/libs ===" && \
+# Debug: Show what was copied
+RUN echo "=== Conteúdo de /tmp/libs ===" && \
     ls -lah /tmp/libs/ && \
     echo "" && \
+    echo "=== Todos os JARs encontrados ===" && \
+    find /tmp/libs -name "*.jar" -exec ls -lah {} \; && \
+    echo "" && \
+    echo "=== Procurando JAR executável (excluindo -plain.jar) ===" && \
+    find /tmp/libs -name "*.jar" ! -name "*-plain.jar" -exec ls -lah {} \;
+
+# Find and copy the executable JAR (exclude -plain.jar which is not executable)
+# Priority: 1) app.jar, 2) any -SNAPSHOT.jar (not -plain), 3) any .jar (not -plain)
+RUN JAR_FILE="" && \
     if [ -f /tmp/libs/app.jar ]; then \
-        echo "Usando app.jar (gerado pelo bootJar)" && \
-        cp /tmp/libs/app.jar /app/app.jar; \
-    elif [ -n "$(find /tmp/libs -name '*-SNAPSHOT.jar' ! -name '*-plain.jar')" ]; then \
-        echo "app.jar não encontrado, usando JAR com padrão -SNAPSHOT.jar" && \
-        cp /tmp/libs/*-SNAPSHOT.jar /app/app.jar; \
+        JAR_FILE="/tmp/libs/app.jar" && \
+        echo "✓ Usando app.jar"; \
+    elif [ -n "$(find /tmp/libs -name '*-SNAPSHOT.jar' ! -name '*-plain.jar' 2>/dev/null | head -1)" ]; then \
+        JAR_FILE=$(find /tmp/libs -name '*-SNAPSHOT.jar' ! -name '*-plain.jar' | head -1) && \
+        echo "✓ Usando JAR com padrão -SNAPSHOT.jar: $JAR_FILE"; \
+    elif [ -n "$(find /tmp/libs -name '*.jar' ! -name '*-plain.jar' 2>/dev/null | head -1)" ]; then \
+        JAR_FILE=$(find /tmp/libs -name '*.jar' ! -name '*-plain.jar' | head -1) && \
+        echo "✓ Usando JAR encontrado: $JAR_FILE"; \
     else \
-        echo "ERRO: Nenhum JAR executável encontrado!" && \
+        echo "✗ ERRO: Nenhum JAR executável encontrado!" && \
+        echo "JARs disponíveis em /tmp/libs:" && \
         ls -lah /tmp/libs/ && \
         exit 1; \
     fi && \
+    echo "Copiando $JAR_FILE para /app/app.jar" && \
+    cp "$JAR_FILE" /app/app.jar && \
     echo "" && \
-    echo "=== Verificando JAR final copiado ===" && \
+    echo "=== Verificando JAR final ===" && \
     ls -lah /app/app.jar && \
     echo "" && \
-    echo "=== Verificando manifest do JAR (deve conter Main-Class) ===" && \
-    unzip -p /app/app.jar META-INF/MANIFEST.MF | head -20 && \
+    echo "=== Verificando manifest ===" && \
+    unzip -p /app/app.jar META-INF/MANIFEST.MF 2>/dev/null | head -15 && \
     echo "" && \
-    echo "=== Verificando se Main-Class está presente ===" && \
-    unzip -p /app/app.jar META-INF/MANIFEST.MF | grep -E "(Main-Class|Spring-Boot)" || echo "AVISO: Main-Class não encontrado no manifest"
+    echo "=== Verificando Main-Class ===" && \
+    (unzip -p /app/app.jar META-INF/MANIFEST.MF 2>/dev/null | grep -q "Main-Class" && echo "✓ Main-Class encontrado") || echo "✗ Main-Class não encontrado!"
+
+# Create non-root user and set permissions
+RUN addgroup -S spring && adduser -S spring -G spring && \
+    chown spring:spring /app/app.jar && \
+    chmod 644 /app/app.jar
+
+USER spring:spring
+
+# Final verification that JAR is accessible
+RUN echo "=== Verificação final como usuário spring ===" && \
+    ls -lah /app/app.jar && \
+    test -f /app/app.jar || (echo "✗ ERRO: app.jar não encontrado!" && exit 1) && \
+    test -r /app/app.jar || (echo "✗ ERRO: app.jar não é legível!" && exit 1) && \
+    echo "✓ JAR está acessível e pronto para execução"
 
 # Expose port (Railway will set PORT env var)
 EXPOSE 8080
