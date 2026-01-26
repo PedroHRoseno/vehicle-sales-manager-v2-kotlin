@@ -43,7 +43,7 @@ class CorsConfig {
         config.addAllowedMethod("OPTIONS")
         config.addAllowedMethod("PATCH")
         
-        // Permitir todos os headers
+        // Permitir todos os headers (incluindo headers do Swagger)
         config.addAllowedHeader("*")
         
         // Headers expostos na resposta
@@ -52,7 +52,21 @@ class CorsConfig {
         // Tempo de cache para preflight requests (1 hora)
         config.maxAge = 3600L
         
+        // Aplicar CORS para todas as rotas, incluindo Swagger
         source.registerCorsConfiguration("/**", config)
+        
+        // Configuração específica para rotas do Swagger/OpenAPI
+        val swaggerConfig = CorsConfiguration().apply {
+            addAllowedOriginPattern("*") // Swagger UI pode estar em qualquer origem
+            addAllowedMethod("*")
+            addAllowedHeader("*")
+            allowCredentials = false
+            maxAge = 3600L
+        }
+        source.registerCorsConfiguration("/v3/api-docs/**", swaggerConfig)
+        source.registerCorsConfiguration("/swagger-ui/**", swaggerConfig)
+        source.registerCorsConfiguration("/swagger-ui.html", swaggerConfig)
+        
         return CorsFilter(source)
     }
 }

@@ -6,7 +6,7 @@
   "SPRING_DATASOURCE_URL": "jdbc:postgresql://postgres.railway.internal:5432/railway",
   "SPRING_DATASOURCE_USERNAME": "postgres",
   "SPRING_DATASOURCE_PASSWORD": "sWpRqXogcHWaUXDDWTRzEDxbniMrOUKs",
-  "CORS_ALLOWED_ORIGINS": "https://almotos-front-4vrq3ihce-pedrohrosenos-projects.vercel.app",
+  "SPRING_WEB_CORS_ALLOWED_ORIGINS": "*",
   "SPRING_JPA_HIBERNATE_DDL_AUTO": "update",
   "SPRING_JPA_SHOW_SQL": "false",
   "SPRING_JPA_FORMAT_SQL": "false"
