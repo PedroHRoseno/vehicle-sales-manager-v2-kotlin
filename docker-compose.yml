@@ -1,4 +1,7 @@
-version: '3.8'
+# Apenas PostgreSQL para desenvolvimento local.
+# Rode o backend Kotlin pela IDE ou terminal (ex.: ./gradlew bootRun).
+# Uso: docker compose up -d
+# Variáveis de conexão devem bater com application-local.yml (user: shido, db: vehicle-sales-manager).
 
 services:
   postgres:

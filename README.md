@@ -21,16 +21,19 @@ vehicle-sales-manager-v2-kotlin/
 │   │   ├── kotlin/
 │   │   │   └── com/pedrohroseno/vehiclessalesmanager/
 │   │   │       ├── model/          # Entidades e DTOs
-│   │   │       │   ├── dtos/      # Data Transfer Objects
-│   │   │       │   └── enums/    # Enumeradores (VehicleStatus, VehicleBrand)
-│   │   │       ├── repository/   # Repositories JPA
-│   │   │       ├── service/       # Lógica de negócio
-│   │   │       ├── controller/   # Endpoints REST
-│   │   │       └── config/        # Configurações (Jackson, etc.)
+│   │   │       │   ├── dtos/        # Data Transfer Objects
+│   │   │       │   └── enums/       # Enumeradores (VehicleStatus, VehicleBrand, etc.)
+│   │   │       ├── repository/     # Repositories JPA
+│   │   │       ├── service/        # Lógica de negócio
+│   │   │       ├── controller/     # Endpoints REST
+│   │   │       └── config/         # Configurações (CORS, Jackson, JWT, etc.)
 │   │   └── resources/
-│   │       └── application.properties
+│   │       ├── application.yml      # Config mestre + perfis
+│   │       ├── application-local.yml # Perfil local (Docker PostgreSQL)
+│   │       └── application-prod.yml  # Perfil prod (Railway)
 │   └── test/
-├── docker-compose.yml
+├── docker-compose.yml   # Apenas PostgreSQL para desenvolvimento local
+├── Dockerfile
 └── build.gradle.kts
 ```
 
@@ -97,7 +100,18 @@ vehicle-sales-manager-v2-kotlin/
 ### Trocas
 - `GET /exchanges` - Listar todas as trocas (paginado)
 - `POST /exchanges` - Realizar troca
-- `POST /trocas` - Realizar troca (endpoint alternativo para compatibilidade)
+- `PUT /exchanges/{id}` - Atualizar troca
+- `DELETE /exchanges/{id}` - Cancelar troca
+
+### Fluxo de caixa e transações da loja
+- `GET /financial/movements` - Movimentações unificadas (vendas, compras, trocas, custos, loja), paginado, filtros: startDate, endDate, type, category
+- `GET /store-transactions` - Listar transações da loja (paginado)
+- `POST /store-transactions` - Registrar transação da loja (despesa/receita)
+- `PUT /store-transactions/{id}` - Atualizar transação
+- `DELETE /store-transactions/{id}` - Cancelar transação
+
+### Autenticação
+- `POST /api/auth/login` - Login (retorna JWT)
 
 ### Relatórios
 - `GET /reports/dashboard` - Dashboard consolidado (totalVendas, totalCompras, saldoLiquido, quantidadeMotosEstoque)
@@ -116,65 +130,50 @@ Exemplo: `GET /sales?page=0&size=20&sort=saleDate,desc&search=ABC1234`
 
 A aplicação está preparada para deploy no Railway. Veja o arquivo `DEPLOY.md` para instruções detalhadas.
 
-### Arquivos de Deploy
+### Arquivos de deploy
 
-- `Dockerfile`: Dockerfile multi-stage otimizado para produção
-- `.dockerignore`: Arquivos ignorados no build Docker
-- `railway.json`: Configuração do Railway (opcional)
-- `DEPLOY.md`: Guia completo de deploy
+- **`Dockerfile`** – Build multi-stage (Gradle + JRE); testes e docs excluídos via `.dockerignore`; porta via `PORT` (Railway).
+- **`.dockerignore`** – Ignora `src/test`, `build`, docs (`*.md`, `scripts`, etc.) para reduzir contexto de build.
+- **`DEPLOY.md`** – Guia passo a passo de deploy.
 
-### Variáveis de Ambiente no Railway
+### Variáveis de ambiente (produção — Railway)
 
-Configure as seguintes variáveis de ambiente:
+Use o perfil **prod** e defina:
 
-- `SPRING_DATASOURCE_URL`: URL do banco PostgreSQL
-- `SPRING_DATASOURCE_USERNAME`: Usuário do banco
-- `SPRING_DATASOURCE_PASSWORD`: Senha do banco
-- `CORS_ALLOWED_ORIGINS`: Origens permitidas para CORS (ex: `https://seu-frontend.com`)
-- `PORT`: Porta do servidor (Railway define automaticamente)
+- `SPRING_PROFILES_ACTIVE=prod`
+- `DB_URL`: URL JDBC do PostgreSQL (ex: `jdbc:postgresql://host:5432/db`)
+- `DB_USER`: Usuário do banco
+- `DB_PASSWORD`: Senha do banco
+- `CORS_ALLOWED_ORIGINS`: Origens permitidas (ex: `https://seu-app.vercel.app`)
+- `PORT`: Porta (Railway define automaticamente)
+- Opcional: `JWT_SECRET`, `JWT_EXPIRATION`
 
 ## Executando o Projeto Localmente
 
 ### Pré-requisitos
 
 - Java 17 ou superior
-- Docker e Docker Compose instalados
-- Gradle (ou use o wrapper incluído)
+- Docker e Docker Compose (apenas para o PostgreSQL)
+- Gradle (wrapper incluído: `./gradlew`)
 
-### Passo a Passo
+### Passo a passo
 
-1. **Iniciar o banco de dados PostgreSQL com Docker Compose:**
+1. **Subir apenas o PostgreSQL (Docker):**
 
 ```bash
 # Na raiz do projeto
-docker-compose up -d
+docker compose up -d
 ```
 
-Isso irá:
-- Criar um container PostgreSQL na porta 5432
-- Criar o banco de dados `vehicle-sales-manager`
-- Configurar usuário `shido` com senha `12345`
-- Criar um volume persistente para os dados
+Isso sobe **somente** o PostgreSQL (porta 5432, usuário `shido`, senha `12345`, banco `vehicle-sales-manager`). O backend é executado pela IDE ou pelo terminal, não em container.
 
-2. **Verificar se o PostgreSQL está rodando:**
-
-```bash
-docker-compose ps
-```
-
-3. **Compilar o projeto:**
-
-```bash
-./gradlew build
-```
-
-4. **Executar a aplicação:**
+2. **Rodar o backend** (perfil `local` é o padrão):
 
 ```bash
 ./gradlew bootRun
 ```
 
-A aplicação estará disponível em `http://localhost:8080`.
+Ou abra o projeto na IDE e rode a classe principal. A aplicação fica em `http://localhost:8080`.
 
 ### Gerenciamento do Banco de Dados
 
@@ -198,16 +197,17 @@ docker-compose logs -f postgres
 docker-compose exec postgres psql -U shido -d vehicle-sales-manager
 ```
 
-### Configuração do Banco de Dados
+### Configuração (YAML e perfis)
 
-As configurações estão em `src/main/resources/application.properties`:
+A aplicação usa **YAML** e perfis Spring:
 
-- **URL**: `jdbc:postgresql://localhost:5432/vehicle-sales-manager`
-- **Usuário**: `shido`
-- **Senha**: `12345`
-- **DDL Auto**: `update` (cria/atualiza tabelas automaticamente)
+- **`application.yml`** – Config mestre: `spring.profiles.active: ${SPRING_PROFILES_ACTIVE:local}`, `server.port: ${PORT:8080}`, Jackson, JPA, CORS, JWT.
+- **`application-local.yml`** (perfil `local`, padrão) – Banco em `localhost:5432`; usuário/senha padrão `shido`/`12345` (ou `DB_USER`/`DB_PASSWORD`).
+- **`application-prod.yml`** (perfil `prod`) – Banco via `DB_URL`, `DB_USER`, `DB_PASSWORD`; `server.forward-headers-strategy: FRAMEWORK`.
 
-**Nota**: Na primeira execução, o Hibernate criará automaticamente todas as tabelas necessárias.
+Para rodar em desenvolvimento, não é necessário definir variáveis: o perfil **local** é o padrão e aponta para o PostgreSQL do `docker-compose`.
+
+**Nota**: Na primeira execução, o Hibernate criará automaticamente todas as tabelas (ddl-auto: update).
 
 ## Documentação da API
 
@@ -215,16 +215,19 @@ Após iniciar a aplicação, a documentação Swagger estará disponível em:
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
 - OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 
-## Compatibilidade com Front-end
+## Compatibilidade com o front-end
 
-Os DTOs foram criados em `camelCase` para compatibilidade com o front-end em TypeScript/Next.js. Os endpoints foram organizados por seções conforme esperado pelo front-end:
+Os DTOs estão em `camelCase` para o front Next.js/TypeScript. Endpoints usados pelo front:
 
-- **Veículos**: `/vehicles`
-- **Parceiros**: `/partners`
+- **Autenticação**: `/api/auth/login`
+- **Veículos**: `/vehicles`, `/vehicles/available`, `/vehicles/{placa}/history`, `/vehicles/{placa}/costs`
+- **Parceiros**: `/partners`, `/partners/{cpf}`
 - **Vendas**: `/sales`
 - **Compras**: `/purchases`
-- **Trocas**: `/exchanges` (ou `/trocas` para compatibilidade)
-- **Relatórios**: `/reports`
+- **Trocas**: `/exchanges`
+- **Fluxo de caixa**: `/financial/movements`
+- **Transações da loja**: `/store-transactions`
+- **Relatórios**: `/reports/dashboard`, `/reports/financial`
 
 ## Estrutura de Dados
 

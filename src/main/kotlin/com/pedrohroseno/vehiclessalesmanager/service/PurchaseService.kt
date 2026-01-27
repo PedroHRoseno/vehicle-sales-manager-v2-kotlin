@@ -4,7 +4,11 @@ import com.pedrohroseno.vehiclessalesmanager.model.Purchase
 import com.pedrohroseno.vehiclessalesmanager.model.Vehicle
 import com.pedrohroseno.vehiclessalesmanager.model.dtos.PurchaseCreateDTO
 import com.pedrohroseno.vehiclessalesmanager.model.dtos.PurchaseResponseDTO
+import com.pedrohroseno.vehiclessalesmanager.model.dtos.PurchaseUpdateDTO
 import com.pedrohroseno.vehiclessalesmanager.model.dtos.VehicleCreateDTO
+import com.pedrohroseno.vehiclessalesmanager.model.enums.ActionType
+import com.pedrohroseno.vehiclessalesmanager.model.enums.TransactionStatus
+import com.pedrohroseno.vehiclessalesmanager.model.enums.TransactionType
 import com.pedrohroseno.vehiclessalesmanager.model.enums.VehicleStatus
 import com.pedrohroseno.vehiclessalesmanager.repository.PurchaseRepository
 import org.springframework.data.domain.Page
@@ -18,7 +22,8 @@ import java.util.Date
 class PurchaseService(
     private val purchaseRepository: PurchaseRepository,
     private val partnerService: PartnerService,
-    private val vehicleService: VehicleService
+    private val vehicleService: VehicleService,
+    private val transactionHistoryService: TransactionHistoryService
 ) {
     fun getAllPurchases(pageable: Pageable, search: String? = null): Page<PurchaseResponseDTO> {
         return if (search.isNullOrBlank()) {
@@ -60,7 +65,18 @@ class PurchaseService(
             purchaseDate = purchaseDate
         )
 
-        return purchaseRepository.save(purchase)
+        val savedPurchase = purchaseRepository.save(purchase)
+        
+        // Log histórico
+        transactionHistoryService.logTransaction(
+            transactionType = TransactionType.PURCHASE,
+            transactionId = savedPurchase.id ?: throw IllegalStateException("Purchase ID não pode ser nulo"),
+            actionType = ActionType.CREATED,
+            description = "Compra criada: R$ ${dto.purchasePrice} - Veículo: ${vehicle.licensePlate}",
+            performedBy = null
+        )
+        
+        return savedPurchase
     }
 
     /**
@@ -94,20 +110,120 @@ class PurchaseService(
             purchaseDate = purchaseDate
         )
 
-        return purchaseRepository.save(purchase)
+        val savedPurchase = purchaseRepository.save(purchase)
+        
+        // Log histórico
+        transactionHistoryService.logTransaction(
+            transactionType = TransactionType.PURCHASE,
+            transactionId = savedPurchase.id ?: throw IllegalStateException("Purchase ID não pode ser nulo"),
+            actionType = ActionType.CREATED,
+            description = "Compra criada: R$ ${dto.purchasePrice} - Veículo: ${vehicle.licensePlate}",
+            performedBy = null
+        )
+        
+        return savedPurchase
     }
 
     @Transactional
-    fun deletePurchase(id: Long) {
+    fun updatePurchase(id: Long, dto: PurchaseUpdateDTO, performedBy: String? = null): Purchase {
         val purchase = purchaseRepository.findByIdAndDeletedFalse(id)
             ?: throw IllegalArgumentException("Compra não encontrada ou já excluída: $id")
         
-        // Marcar veículo como excluído (remover do estoque)
-        // Como não temos campo deleted no Vehicle, vamos usar um status especial ou deletar fisicamente
-        // Por enquanto, vamos deletar fisicamente o veículo
-        vehicleService.deleteVehicle(purchase.vehicle.licensePlate)
+        if (purchase.status == TransactionStatus.CANCELLED) {
+            throw IllegalStateException("Não é possível editar uma compra cancelada")
+        }
         
-        // Soft delete da compra
+        val oldPrice = purchase.purchasePrice
+        val oldDate = purchase.purchaseDate
+        
+        // Atualizar preço se fornecido
+        if (dto.purchasePrice != null && dto.purchasePrice > 0) {
+            purchase.purchasePrice = dto.purchasePrice
+        }
+        
+        // Atualizar data se fornecida
+        if (!dto.purchaseDate.isNullOrBlank()) {
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd")
+            try {
+                purchase.purchaseDate = dateFormat.parse(dto.purchaseDate)
+            } catch (e: Exception) {
+                throw IllegalArgumentException("Data inválida: ${dto.purchaseDate}")
+            }
+        }
+        
+        val updatedPurchase = purchaseRepository.save(purchase)
+        
+        // Log histórico
+        val description = buildString {
+            if (dto.purchasePrice != null && dto.purchasePrice != oldPrice) {
+                append("Valor alterado de R$ $oldPrice para R$ ${dto.purchasePrice}. ")
+            }
+            if (!dto.purchaseDate.isNullOrBlank()) {
+                append("Data atualizada. ")
+            }
+            append("Saldo atualizado.")
+        }
+        
+        transactionHistoryService.logTransaction(
+            transactionType = TransactionType.PURCHASE,
+            transactionId = updatedPurchase.id ?: throw IllegalStateException("Purchase ID não pode ser nulo"),
+            actionType = ActionType.EDITED,
+            description = "Compra editada: $description",
+            oldValue = "Preço: R$ $oldPrice, Data: $oldDate",
+            newValue = "Preço: R$ ${updatedPurchase.purchasePrice}, Data: ${updatedPurchase.purchaseDate}",
+            performedBy = performedBy
+        )
+        
+        return updatedPurchase
+    }
+
+    @Transactional
+    fun cancelPurchase(id: Long, performedBy: String? = null): Purchase {
+        val purchase = purchaseRepository.findByIdAndDeletedFalse(id)
+            ?: throw IllegalArgumentException("Compra não encontrada ou já excluída: $id")
+        
+        if (purchase.status == TransactionStatus.CANCELLED) {
+            throw IllegalStateException("Compra já está cancelada")
+        }
+        
+        purchase.status = TransactionStatus.CANCELLED
+        val cancelledPurchase = purchaseRepository.save(purchase)
+        
+        // Marcar veículo como INACTIVE quando compra é cancelada
+        vehicleService.updateVehicleStatus(purchase.vehicle.licensePlate, VehicleStatus.INACTIVE)
+        
+        // Log histórico
+        transactionHistoryService.logTransaction(
+            transactionType = TransactionType.PURCHASE,
+            transactionId = cancelledPurchase.id ?: throw IllegalStateException("Purchase ID não pode ser nulo"),
+            actionType = ActionType.CANCELLED,
+            description = "Compra cancelada: R$ ${purchase.purchasePrice} - Veículo: ${purchase.vehicle.licensePlate}. Status do veículo alterado para INACTIVE.",
+            performedBy = performedBy
+        )
+        
+        return cancelledPurchase
+    }
+
+    @Transactional
+    fun deletePurchase(id: Long, deleteVehicle: Boolean = false) {
+        val purchase = purchaseRepository.findByIdAndDeletedFalse(id)
+            ?: throw IllegalArgumentException("Compra não encontrada ou já excluída: $id")
+        
+        // Se deleteVehicle == true, tentar deletar o veículo
+        if (deleteVehicle) {
+            try {
+                vehicleService.deleteVehicle(purchase.vehicle.licensePlate)
+            } catch (e: IllegalStateException) {
+                // Se o veículo não pode ser deletado (tem outras referências), lança exceção
+                throw IllegalStateException("Não é possível deletar o veículo ${purchase.vehicle.licensePlate}: ${e.message}")
+            }
+        } else {
+            // Se não deletar o veículo, cancelar a compra (mudar status para CANCELLED)
+            cancelPurchase(id, null)
+            return
+        }
+        
+        // Soft delete da compra apenas se deleteVehicle == true
         purchase.deleted = true
         purchaseRepository.save(purchase)
     }
@@ -121,7 +237,8 @@ class PurchaseService(
             partnerCpf = this.partner.cpf,
             partnerName = this.partner.name,
             purchasePrice = this.purchasePrice,
-            purchaseDate = this.purchaseDate
+            purchaseDate = this.purchaseDate,
+            status = this.status
         )
     }
 }

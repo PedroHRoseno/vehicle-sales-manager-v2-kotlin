@@ -1,6 +1,30 @@
 # Como Recriar o Banco de Dados PostgreSQL
 
-Se você está encontrando erros de constraint (como "NULL not allowed for column"), o banco de dados pode ter sido criado com a estrutura antiga. Siga estes passos para recriar:
+Se você está encontrando erros de constraint (como "NULL not allowed for column" ou "transaction_history_transaction_type_check"), o banco de dados pode ter sido criado com a estrutura antiga. Siga estes passos para recriar:
+
+## Erro "transaction_history_transaction_type_check" (Fluxo de Caixa)
+
+Ao cadastrar uma transação no fluxo de caixa, se aparecer:
+
+```
+ERROR: new row for relation "transaction_history" violates check constraint "transaction_history_transaction_type_check"
+```
+
+a constraint da tabela `transaction_history` não inclui `STORE_TRANSACTION`. Corrija assim:
+
+**Via Docker (na pasta do backend):**
+```bash
+docker-compose exec -T postgres psql -U shido -d vehicle-sales-manager < scripts/fix-transaction-history-constraint.sql
+```
+
+**Ou via psql manualmente:** abra o banco, depois execute:
+```sql
+ALTER TABLE transaction_history DROP CONSTRAINT IF EXISTS transaction_history_transaction_type_check;
+ALTER TABLE transaction_history ADD CONSTRAINT transaction_history_transaction_type_check
+  CHECK (transaction_type IN ('PURCHASE', 'SALE', 'EXCHANGE', 'STORE_TRANSACTION'));
+```
+
+---
 
 ## Opção 1: Recriar via Docker Compose (Recomendado)
 

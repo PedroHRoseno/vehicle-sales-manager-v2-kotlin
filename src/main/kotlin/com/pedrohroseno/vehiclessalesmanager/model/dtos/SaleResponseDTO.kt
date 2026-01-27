@@ -1,5 +1,6 @@
 package com.pedrohroseno.vehiclessalesmanager.model.dtos
 
+import com.pedrohroseno.vehiclessalesmanager.model.enums.TransactionStatus
 import java.util.Date
 
 data class SaleResponseDTO(
@@ -10,5 +11,6 @@ data class SaleResponseDTO(
     val partnerCpf: String,
     val partnerName: String,
     val salePrice: Double,
-    val saleDate: Date
+    val saleDate: Date,
+    val status: TransactionStatus
 )

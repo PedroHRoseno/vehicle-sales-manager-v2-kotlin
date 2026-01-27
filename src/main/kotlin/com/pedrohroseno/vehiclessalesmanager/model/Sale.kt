@@ -1,5 +1,6 @@
 package com.pedrohroseno.vehiclessalesmanager.model
 
+import com.pedrohroseno.vehiclessalesmanager.model.enums.TransactionStatus
 import jakarta.persistence.*
 import java.util.Date
 
@@ -26,5 +27,9 @@ data class Sale(
     var saleDate: Date = Date(),
     
     @Column(nullable = false)
-    var deleted: Boolean = false
+    var deleted: Boolean = false,
+    
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    var status: TransactionStatus = TransactionStatus.ACTIVE
 )

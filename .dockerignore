@@ -1,11 +1,21 @@
 .gradle
 build
+target
 .idea
 *.iml
 *.log
 .git
 .gitignore
+.DS_Store
+
+# Testes (build de produção usa -x test; reduz contexto)
+src/test
+
+# Documentação e infra (não necessários no build de produção)
 README.md
 RECREATE_DB.md
+DEPLOY.md
 docker-compose.yml
-.DS_Store
+scripts
+*.md
+railway*.json

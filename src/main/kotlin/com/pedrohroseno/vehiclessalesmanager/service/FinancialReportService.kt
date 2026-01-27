@@ -2,6 +2,9 @@ package com.pedrohroseno.vehiclessalesmanager.service
 
 import com.pedrohroseno.vehiclessalesmanager.model.dtos.DashboardDTO
 import com.pedrohroseno.vehiclessalesmanager.model.dtos.FinancialReportDTO
+import com.pedrohroseno.vehiclessalesmanager.model.enums.TransactionCategory
+import com.pedrohroseno.vehiclessalesmanager.model.enums.TransactionStatus
+import com.pedrohroseno.vehiclessalesmanager.model.enums.TransactionTypeEnum
 import com.pedrohroseno.vehiclessalesmanager.model.enums.VehicleStatus
 import com.pedrohroseno.vehiclessalesmanager.repository.ExchangeRepository
 import com.pedrohroseno.vehiclessalesmanager.repository.PurchaseRepository
@@ -17,7 +20,9 @@ class FinancialReportService(
     private val saleRepository: SaleRepository,
     private val purchaseRepository: PurchaseRepository,
     private val exchangeRepository: ExchangeRepository,
-    private val vehicleRepository: VehicleRepository
+    private val vehicleRepository: VehicleRepository,
+    private val vehicleCostRepository: com.pedrohroseno.vehiclessalesmanager.repository.VehicleCostRepository,
+    private val storeTransactionRepository: com.pedrohroseno.vehiclessalesmanager.repository.StoreTransactionRepository
 ) {
     fun getFinancialReport(startDate: Date? = null, endDate: Date? = null): FinancialReportDTO {
         // Se não foram fornecidas datas, usa o padrão de 30 dias atrás até hoje
@@ -29,11 +34,13 @@ class FinancialReportService(
             calendar.time
         }
 
-        // Calcular totais
-        val totalVendas = saleRepository.sumSalePriceByDateRange(start, end)
-        val totalCompras = purchaseRepository.sumPurchasePriceByDateRange(start, end)
-        val totalTrocas = exchangeRepository.sumDiferencaValorByDateRange(start, end)
-        val saldoGeral = totalVendas - totalCompras + totalTrocas
+        // Calcular totais apenas de transações ATIVAS
+        val totalVendas = saleRepository.sumSalePriceByDateRangeAndStatus(start, end, TransactionStatus.ACTIVE)
+        val totalCompras = purchaseRepository.sumPurchasePriceByDateRangeAndStatus(start, end, TransactionStatus.ACTIVE)
+        val totalTrocas = exchangeRepository.sumDiferencaValorByDateRangeAndStatus(start, end, TransactionStatus.ACTIVE)
+        val totalCustos = vehicleCostRepository.sumCostsByDateRange(start, end)
+        // Saldo = Vendas + Trocas - Compras - Custos Adicionais
+        val saldoGeral = totalVendas - totalCompras + totalTrocas - totalCustos
 
         val dateFormat = SimpleDateFormat("yyyy-MM-dd")
         
@@ -42,24 +49,48 @@ class FinancialReportService(
             totalVendas = totalVendas,
             totalCompras = totalCompras,
             totalTrocas = totalTrocas,
+            totalCustos = totalCustos,
             startDate = dateFormat.format(start),
             endDate = dateFormat.format(end)
         )
     }
 
     fun getDashboard(): DashboardDTO {
-        // Calcular totais de todas as vendas, compras e trocas (sem filtro de data)
-        val totalVendas = saleRepository.findAll().sumOf { it.salePrice }
-        val totalCompras = purchaseRepository.findAll().sumOf { it.purchasePrice }
-        val totalTrocas = exchangeRepository.sumDiferencaValorAll()
-        val saldoLiquido = totalVendas - totalCompras + totalTrocas
+        // Calcular totais apenas de transações ATIVAS (sem filtro de data)
+        val totalVendas = saleRepository.sumSalePriceByStatus(TransactionStatus.ACTIVE)
+        val totalCompras = purchaseRepository.sumPurchasePriceByStatus(TransactionStatus.ACTIVE)
+        val totalTrocas = exchangeRepository.sumDiferencaValorByStatus(TransactionStatus.ACTIVE)
+        val totalCustos = vehicleCostRepository.sumAllCosts()
+        
+        // Calcular despesas operacionais (OPERACIONAL, ADMINISTRATIVO, MARKETING, INFRAESTRUTURA)
+        val despesasOperacionais = storeTransactionRepository.sumByStatusTypeAndCategories(
+            TransactionStatus.ACTIVE,
+            TransactionTypeEnum.EXIT,
+            listOf(
+                TransactionCategory.OPERACIONAL,
+                TransactionCategory.ADMINISTRATIVO,
+                TransactionCategory.MARKETING,
+                TransactionCategory.INFRAESTRUTURA
+            )
+        )
+        
+        // Lucro Bruto = Vendas - Compras + Trocas - Custos de Veículos
+        val lucroBruto = totalVendas - totalCompras + totalTrocas - totalCustos
+        
+        // Lucro Líquido = Lucro Bruto - Despesas Operacionais
+        val lucroLiquido = lucroBruto - despesasOperacionais
+        
         val quantidadeMotosEstoque = vehicleRepository.countByStatus(VehicleStatus.DISPONIVEL)
 
         return DashboardDTO(
             totalVendas = totalVendas,
             totalCompras = totalCompras,
             totalTrocas = totalTrocas,
-            saldoLiquido = saldoLiquido,
+            totalCustos = totalCustos,
+            despesasOperacionais = despesasOperacionais,
+            lucroBruto = lucroBruto,
+            lucroLiquido = lucroLiquido,
+            saldoLiquido = lucroLiquido, // Mantido para compatibilidade
             quantidadeMotosEstoque = quantidadeMotosEstoque
         )
     }
