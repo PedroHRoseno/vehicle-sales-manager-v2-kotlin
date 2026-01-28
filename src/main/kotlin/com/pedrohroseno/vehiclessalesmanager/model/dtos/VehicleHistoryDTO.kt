@@ -16,7 +16,7 @@ data class PurchaseHistoryItem(
     val id: Long,
     val purchaseDate: Date,
     val purchasePrice: Double,
-    val partnerCpf: String,
+    val partnerDocument: String,
     val partnerName: String,
     val status: TransactionStatus
 )
@@ -25,7 +25,7 @@ data class SaleHistoryItem(
     val id: Long,
     val saleDate: Date,
     val salePrice: Double,
-    val partnerCpf: String,
+    val partnerDocument: String,
     val partnerName: String,
     val status: TransactionStatus
 )
@@ -34,7 +34,7 @@ data class ExchangeHistoryItem(
     val id: Long,
     val exchangeDate: Date,
     val diferencaValor: Double,
-    val partnerCpf: String,
+    val partnerDocument: String,
     val partnerName: String,
     val isIncomingVehicle: Boolean, // true se este veículo é o de entrada, false se é o de saída
     val status: TransactionStatus

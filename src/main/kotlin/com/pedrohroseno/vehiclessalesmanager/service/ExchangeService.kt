@@ -30,9 +30,9 @@ class ExchangeService(
     @Transactional
     fun createExchange(dto: ExchangeCreateDTO): Exchange {
         // Buscar parceiro - se não fornecido, tenta buscar através de venda anterior do veículo de entrada
-        val partner = if (!dto.customerCpf.isNullOrBlank()) {
-            partnerService.findByCpf(dto.customerCpf.trim())
-                ?: throw IllegalArgumentException("Parceiro não encontrado com CPF: ${dto.customerCpf}. Certifique-se de que o parceiro está cadastrado no sistema.")
+        val partner = if (!dto.customerDocument.isNullOrBlank()) {
+            partnerService.findByDocument(dto.customerDocument.trim())
+                ?: throw IllegalArgumentException("Parceiro não encontrado com documento: ${dto.customerDocument}. Certifique-se de que o parceiro está cadastrado no sistema.")
         } else {
             // Buscar parceiro através da última venda do veículo de entrada
             val lastSale = saleRepository.findAll()
@@ -40,7 +40,7 @@ class ExchangeService(
                 .maxByOrNull { it.saleDate }
             
             lastSale?.partner
-                ?: throw IllegalArgumentException("Parceiro não encontrado. O CPF do parceiro é obrigatório quando o veículo de entrada não foi vendido anteriormente pelo sistema. Por favor, selecione o parceiro no formulário.")
+                ?: throw IllegalArgumentException("Parceiro não encontrado. O documento do parceiro é obrigatório quando o veículo de entrada não foi vendido anteriormente pelo sistema. Por favor, selecione o parceiro no formulário.")
         }
 
         // Buscar veículo de entrada (do cliente)
@@ -201,7 +201,7 @@ class ExchangeService(
             vehicleSaidaLicensePlate = this.vehicleSaida.licensePlate,
             vehicleSaidaBrand = this.vehicleSaida.brand.name,
             vehicleSaidaModel = this.vehicleSaida.modelName,
-            partnerCpf = this.partner.cpf,
+            partnerDocument = this.partner.document,
             partnerName = this.partner.name,
             diferencaValor = this.diferencaValor,
             exchangeDate = this.exchangeDate,

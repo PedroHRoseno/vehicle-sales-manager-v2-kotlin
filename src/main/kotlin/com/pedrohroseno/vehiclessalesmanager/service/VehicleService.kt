@@ -84,7 +84,7 @@ class VehicleService(
                     id = purchase.id ?: throw IllegalStateException("Purchase ID não pode ser nulo"),
                     purchaseDate = purchase.purchaseDate,
                     purchasePrice = purchase.purchasePrice,
-                    partnerCpf = purchase.partner.cpf,
+                    partnerDocument = purchase.partner.document,
                     partnerName = purchase.partner.name,
                     status = purchase.status
                 )
@@ -96,7 +96,7 @@ class VehicleService(
                     id = sale.id ?: throw IllegalStateException("Sale ID não pode ser nulo"),
                     saleDate = sale.saleDate,
                     salePrice = sale.salePrice,
-                    partnerCpf = sale.partner.cpf,
+                    partnerDocument = sale.partner.document,
                     partnerName = sale.partner.name,
                     status = sale.status
                 )
@@ -109,7 +109,7 @@ class VehicleService(
                     id = exchange.id ?: throw IllegalStateException("Exchange ID não pode ser nulo"),
                     exchangeDate = exchange.exchangeDate,
                     diferencaValor = exchange.diferencaValor,
-                    partnerCpf = exchange.partner.cpf,
+                    partnerDocument = exchange.partner.document,
                     partnerName = exchange.partner.name,
                     isIncomingVehicle = isIncomingVehicle,
                     status = exchange.status

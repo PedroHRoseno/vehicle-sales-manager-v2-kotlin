@@ -3,8 +3,8 @@ package com.pedrohroseno.vehiclessalesmanager.model.dtos
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class PartnerCreateDTO(
-    @JsonProperty("cpf")
-    val cpf: String,
+    @JsonProperty("document")
+    val document: String,
     @JsonProperty("name")
     val name: String,
     @JsonProperty("phoneNumber1")

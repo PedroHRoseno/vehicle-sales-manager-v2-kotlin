@@ -4,5 +4,5 @@ data class ExchangeCreateDTO(
     val veiculoEntradaLicensePlate: String,
     val veiculoSaidaLicensePlate: String,
     val valorDiferenca: Double,
-    val customerCpf: String? = null // CPF do parceiro (opcional - será buscado via venda anterior se não fornecido)
+    val customerDocument: String? = null // Documento do parceiro – CPF 11 ou CNPJ 14 dígitos (opcional – será buscado via venda anterior se não fornecido)
 )

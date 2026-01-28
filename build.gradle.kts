@@ -30,7 +30,8 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-jackson:0.12.3")
     
     runtimeOnly("org.postgresql:postgresql")
-    
+    implementation("org.flywaydb:flyway-core")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
 }

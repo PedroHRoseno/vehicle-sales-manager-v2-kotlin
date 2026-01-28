@@ -35,7 +35,7 @@ class PurchaseService(
     @Transactional
     fun createPurchase(dto: PurchaseCreateDTO): Purchase {
         // Buscar ou criar parceiro (fornecedor)
-        val partner = partnerService.findByCpf(dto.customer.cpf)
+        val partner = partnerService.findByDocument(dto.customer.document)
             ?: throw IllegalArgumentException("Parceiro não encontrado. Cadastre o parceiro primeiro.")
 
         // Buscar veículo - deve existir (regra: na compra, o veículo é cadastrado automaticamente)
@@ -86,7 +86,7 @@ class PurchaseService(
     @Transactional
     fun createPurchaseWithVehicle(dto: PurchaseCreateDTO, vehicleDto: VehicleCreateDTO): Purchase {
         // Buscar ou criar parceiro
-        val partner = partnerService.findByCpf(dto.customer.cpf)
+        val partner = partnerService.findByDocument(dto.customer.document)
             ?: throw IllegalArgumentException("Parceiro não encontrado. Cadastre o parceiro primeiro.")
 
         // Criar veículo com status DISPONIVEL (regra de negócio)
@@ -234,7 +234,7 @@ class PurchaseService(
             vehicleLicensePlate = this.vehicle.licensePlate,
             vehicleBrand = this.vehicle.brand.name,
             vehicleModel = this.vehicle.modelName,
-            partnerCpf = this.partner.cpf,
+            partnerDocument = this.partner.document,
             partnerName = this.partner.name,
             purchasePrice = this.purchasePrice,
             purchaseDate = this.purchaseDate,

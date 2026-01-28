@@ -8,7 +8,7 @@ data class SaleResponseDTO(
     val vehicleLicensePlate: String,
     val vehicleBrand: String,
     val vehicleModel: String,
-    val partnerCpf: String,
+    val partnerDocument: String,
     val partnerName: String,
     val salePrice: Double,
     val saleDate: Date,

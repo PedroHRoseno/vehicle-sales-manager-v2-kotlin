@@ -10,12 +10,12 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface PartnerRepository : JpaRepository<Partner, String> {
-    fun findByCpf(cpf: String): Partner?
+    fun findByDocument(document: String): Partner?
     fun findAllByOrderByNameAsc(pageable: Pageable): Page<Partner>
     
     @Query("SELECT p FROM Partner p WHERE " +
-           "LOWER(p.cpf) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(p.document) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
            "LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
            "ORDER BY p.name ASC")
-    fun searchByCpfOrName(@Param("search") search: String, pageable: Pageable): Page<Partner>
+    fun searchByDocumentOrName(@Param("search") search: String, pageable: Pageable): Page<Partner>
 }

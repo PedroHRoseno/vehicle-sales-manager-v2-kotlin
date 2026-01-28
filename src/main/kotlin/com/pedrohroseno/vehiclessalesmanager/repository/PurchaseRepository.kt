@@ -28,7 +28,7 @@ interface PurchaseRepository : JpaRepository<Purchase, Long> {
     
     @Query("SELECT p FROM Purchase p WHERE p.deleted = false AND (" +
            "LOWER(p.vehicle.licensePlate) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-           "LOWER(p.partner.cpf) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(p.partner.document) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
            "LOWER(p.partner.name) LIKE LOWER(CONCAT('%', :search, '%'))) " +
            "ORDER BY p.purchaseDate DESC")
     fun searchByVehicleOrPartnerAndDeletedFalse(@Param("search") search: String, pageable: Pageable): Page<Purchase>

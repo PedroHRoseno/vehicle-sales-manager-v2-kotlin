@@ -33,7 +33,7 @@ class SaleService(
     @Transactional
     fun createSale(dto: SaleCreateDTO): Sale {
         // Buscar parceiro (comprador)
-        val partner = partnerService.findByCpf(dto.customer.cpf)
+        val partner = partnerService.findByDocument(dto.customer.document)
             ?: throw IllegalArgumentException("Parceiro não encontrado. Cadastre o parceiro primeiro.")
 
         // Buscar veículo
@@ -162,7 +162,7 @@ class SaleService(
             vehicleLicensePlate = this.vehicle.licensePlate,
             vehicleBrand = this.vehicle.brand.name,
             vehicleModel = this.vehicle.modelName,
-            partnerCpf = this.partner.cpf,
+            partnerDocument = this.partner.document,
             partnerName = this.partner.name,
             salePrice = this.salePrice,
             saleDate = this.saleDate,

@@ -105,7 +105,7 @@ class PurchaseController(
             vehicleLicensePlate = this.vehicle.licensePlate,
             vehicleBrand = this.vehicle.brand.name,
             vehicleModel = this.vehicle.modelName,
-            partnerCpf = this.partner.cpf,
+            partnerDocument = this.partner.document,
             partnerName = this.partner.name,
             purchasePrice = this.purchasePrice,
             purchaseDate = this.purchaseDate,

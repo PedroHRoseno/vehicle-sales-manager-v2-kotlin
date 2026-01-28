@@ -1,0 +1,7 @@
+{
+  "SPRING_PROFILES_ACTIVE": "prod",
+  "DB_URL": "jdbc:postgresql://${{Postgres.PGHOST}}:${{Postgres.PGPORT}}/${{Postgres.PGDATABASE}}",
+  "DB_USER": "${{Postgres.PGUSER}}",
+  "DB_PASSWORD": "${{Postgres.PGPASSWORD}}",
+  "CORS_ALLOWED_ORIGINS": "https://SEU-APP.vercel.app"
+}

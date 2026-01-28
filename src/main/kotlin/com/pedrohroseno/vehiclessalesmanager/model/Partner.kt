@@ -6,8 +6,8 @@ import jakarta.persistence.*
 @Table(name = "partners")
 data class Partner(
     @Id
-    @Column(unique = true, nullable = false)
-    var cpf: String,
+    @Column(name = "document", unique = true, nullable = false)
+    var document: String,
     
     @Column(nullable = false)
     var name: String,

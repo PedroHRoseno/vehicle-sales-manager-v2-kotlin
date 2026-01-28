@@ -10,30 +10,32 @@ Este documento descreve como fazer o deploy da aplicação no Railway.
 
 ## Variáveis de Ambiente
 
-Configure as seguintes variáveis de ambiente no Railway:
+A aplicação usa **perfis Spring** (`application.yml` + `application-prod.yml`). Em produção no Railway é **obrigatório** usar o perfil **prod**.
 
-### Obrigatórias
+Configure as seguintes variáveis de ambiente no **serviço do backend** (não no PostgreSQL):
 
-- `SPRING_DATASOURCE_URL`: URL completa do banco PostgreSQL
-  - Exemplo: `jdbc:postgresql://host:port/database`
-  - Se usar PostgreSQL do Railway, será algo como: `jdbc:postgresql://containers-us-west-xxx.railway.app:5432/railway`
+### Obrigatórias (perfil prod)
 
-- `SPRING_DATASOURCE_USERNAME`: Usuário do banco de dados
+- `SPRING_PROFILES_ACTIVE`: **`prod`** (ativa `application-prod.yml`)
 
-- `SPRING_DATASOURCE_PASSWORD`: Senha do banco de dados
+- `DB_URL`: URL JDBC do PostgreSQL  
+  - Ex.: `jdbc:postgresql://host:port/database`  
+  - Se usar PostgreSQL do Railway: monte com `PGHOST`, `PGPORT`, `PGDATABASE` do serviço Postgres (ex.: `jdbc:postgresql://monolith.proxy.rlwy.net:12345/railway`)
 
-### Opcionais (com valores padrão)
+- `DB_USER`: Usuário do banco (ex.: `postgres`)
 
-- `PORT`: Porta do servidor (Railway define automaticamente, não precisa configurar manualmente)
-- `SPRING_JPA_HIBERNATE_DDL_AUTO`: Modo de atualização do schema (padrão: `update`)
-  - Valores: `none`, `validate`, `update`, `create`, `create-drop`
-- `SPRING_JPA_SHOW_SQL`: Mostrar SQL no console (padrão: `false`)
-- `SPRING_JPA_FORMAT_SQL`: Formatar SQL no console (padrão: `false`)
-- `CORS_ALLOWED_ORIGINS`: Origens permitidas para CORS (padrão: `http://localhost:3000`)
-  - Para produção, configure com o domínio do frontend: `https://seu-dominio.com`
-  - Para permitir múltiplas origens, separe por vírgula: `https://app.vercel.app,https://seu-dominio.com`
-  - Para permitir qualquer origem (não recomendado para produção), use: `*`
-    - **Nota**: Quando usar `*`, as credenciais serão desabilitadas automaticamente
+- `DB_PASSWORD`: Senha do banco
+
+### Recomendadas
+
+- `CORS_ALLOWED_ORIGINS`: Origens permitidas para CORS  
+  - Produção: URL do front na Vercel, ex.: `https://almotos-front.vercel.app`  
+  - Múltiplas: separar por vírgula, ex.: `https://seu-app.vercel.app,http://localhost:3000`
+
+### Opcionais (com valores padrão no application.yml)
+
+- `PORT`: Railway define automaticamente; a aplicação usa `server.port: ${PORT:8080}`
+- `JWT_SECRET`, `JWT_EXPIRATION`: têm default; em produção é melhor definir `JWT_SECRET` forte
 
 ## Passos para Deploy
 
@@ -68,96 +70,53 @@ Configure as seguintes variáveis de ambiente no Railway:
 
 ### 3. Configurar Variáveis de Ambiente
 
-**Opção A: Usar Variáveis PG* Automaticamente (Mais Simples - Recomendado)**
+No **serviço do backend** (não no PostgreSQL), em **Variables**, use os nomes esperados pelo perfil **prod** (`application-prod.yml`). Você pode colar o JSON do arquivo **`railway-variables-prod.json`** no Raw Editor (recomendado; veja opção 1 abaixo).
 
-Se o PostgreSQL estiver no mesmo projeto Railway, você pode simplesmente **NÃO definir** as variáveis `SPRING_DATASOURCE_*`. O Spring Boot usará automaticamente as variáveis `PG*` que o Railway compartilha entre serviços do mesmo projeto.
+- **`SPRING_PROFILES_ACTIVE`** = `prod`
+- **`DB_URL`** = URL JDBC (ex.: `jdbc:postgresql://host:port/database`)
+- **`DB_USER`** = usuário do banco
+- **`DB_PASSWORD`** = senha do banco
+- **`CORS_ALLOWED_ORIGINS`** = URL do front na Vercel (ex.: `https://almotos-front.vercel.app`)
 
-1. No Railway, vá no serviço da sua aplicação (não no PostgreSQL)
-2. Clique em **"Variables"**
-3. Clique em **"Raw Editor"**
-4. Use o arquivo `railway-variables-simple.json` que contém apenas as variáveis opcionais:
-   ```json
-   {
-     "CORS_ALLOWED_ORIGINS": "https://seu-frontend.vercel.app",
-     "SPRING_JPA_HIBERNATE_DDL_AUTO": "update",
-     "SPRING_JPA_SHOW_SQL": "false",
-     "SPRING_JPA_FORMAT_SQL": "false"
-   }
-   ```
-5. Cole o JSON e clique em **"Save"**
+#### Opção 1: Variáveis por referência (recomendado — não precisa colar senha)
 
-**Vantagem:** Não precisa copiar valores manualmente - o Railway compartilha `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE` automaticamente.
+No Railway você pode usar **referências** ao serviço PostgreSQL: o backend não recebe os valores diretamente; o Railway resolve `${{NomeDoServiço.VAR}}` no deploy.
 
-**Opção B: Definir SPRING_DATASOURCE_* Explicitamente**
+1. No **serviço do backend**, abra **Variables** → **Raw Editor**.
+2. Cole o conteúdo do arquivo **`railway-variables-prod.json`** deste repositório.
+3. Ajuste **apenas**:
+   - **Nome do serviço Postgres:** no JSON aparece `${{Postgres.PGHOST}}`, `${{Postgres.PGUSER}}`, etc. Se o seu serviço de banco tiver outro nome no dashboard (ex.: `postgres`, `PostgreSQL`), troque `Postgres` por esse nome em todas as referências.
+   - **CORS:** altere `https://SEU-APP.vercel.app` para a URL real do seu front na Vercel.
 
-Se preferir definir explicitamente ou se o PostgreSQL estiver em outro projeto:
+Exemplo do JSON (já está em `railway-variables-prod.json`):
 
-1. No Railway, vá no serviço da sua aplicação (não no PostgreSQL)
-2. Clique em **"Variables"**
-3. Clique em **"Raw Editor"**
-4. Abra o arquivo `railway-variables.json` do projeto
-5. **Substitua os valores pelos dados reais do seu PostgreSQL:**
-   - No serviço PostgreSQL do Railway, vá em **"Variables"** e copie os valores REAIS:
-     - `PGHOST` (ex: `containers-us-west-123.railway.app` ou `postgres.railway.internal`)
-     - `PGPORT` (geralmente `5432`)
-     - `PGUSER` (geralmente `postgres`)
-     - `PGPASSWORD` (senha gerada pelo Railway)
-     - `PGDATABASE` (geralmente `railway`)
-   - **Monte a URL:** `jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE}` (substitua pelos valores reais)
-   - Substitua `CORS_ALLOWED_ORIGINS` pela URL do seu frontend
-6. Cole o JSON editado no Raw Editor do Railway
-7. Clique em **"Save"** ou **"Update Variables"**
-
-**Arquivos disponíveis:**
-- `railway-variables-simple.json` - Apenas variáveis opcionais (usa PG* automaticamente)
-- `railway-variables.json` - Template com SPRING_DATASOURCE_* para editar
-- `railway-variables.example.json` - Exemplo com valores de referência e instruções
-
-**Opção B: Adicionar Manualmente**
-
-No Railway, vá no serviço da sua aplicação (não no PostgreSQL) → **"Variables"** → **"New Variable"** e adicione:
-
-#### Variáveis Obrigatórias (para conectar ao PostgreSQL)
-
-Se você criou o PostgreSQL no Railway, você pode encontrar essas informações na aba "Variables" do serviço PostgreSQL:
-
-```
-SPRING_DATASOURCE_URL=jdbc:postgresql://PGHOST:PGPORT/PGDATABASE
-SPRING_DATASOURCE_USERNAME=PGUSER
-SPRING_DATASOURCE_PASSWORD=PGPASSWORD
+```json
+{
+  "SPRING_PROFILES_ACTIVE": "prod",
+  "DB_URL": "jdbc:postgresql://${{Postgres.PGHOST}}:${{Postgres.PGPORT}}/${{Postgres.PGDATABASE}}",
+  "DB_USER": "${{Postgres.PGUSER}}",
+  "DB_PASSWORD": "${{Postgres.PGPASSWORD}}",
+  "CORS_ALLOWED_ORIGINS": "https://SEU-APP.vercel.app"
+}
 ```
 
-**Exemplo prático:**
-Se o Railway forneceu:
-- `PGHOST=containers-us-west-123.railway.app`
-- `PGPORT=5432`
-- `PGUSER=postgres`
-- `PGPASSWORD=abc123xyz`
-- `PGDATABASE=railway`
+Assim você não copia URL nem senha; o Railway puxa os valores do serviço PostgreSQL na hora do deploy.
 
-Configure:
-```
-SPRING_DATASOURCE_URL=jdbc:postgresql://containers-us-west-123.railway.app:5432/railway
-SPRING_DATASOURCE_USERNAME=postgres
-SPRING_DATASOURCE_PASSWORD=abc123xyz
-```
+#### Opção 2: Valores fixos (copiando do Postgres)
 
-#### Variáveis Opcionais
+No **serviço PostgreSQL** do Railway, abra **Variables** ou **Connect**. Use `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE` para montar no **serviço do backend**:
 
 ```
-CORS_ALLOWED_ORIGINS=https://seu-frontend.com
-SPRING_JPA_HIBERNATE_DDL_AUTO=update
+SPRING_PROFILES_ACTIVE=prod
+DB_URL=jdbc:postgresql://<PGHOST>:<PGPORT>/<PGDATABASE>
+DB_USER=<PGUSER>
+DB_PASSWORD=<PGPASSWORD>
+CORS_ALLOWED_ORIGINS=https://seu-frontend.vercel.app
 ```
 
-**Dica**: Se você criou o PostgreSQL no mesmo projeto Railway, você pode referenciar as variáveis do PostgreSQL diretamente usando a sintaxe `${PGHOST}`, mas é mais seguro copiar os valores reais.
+Substitua `<PGHOST>`, `<PGPORT>`, etc. pelos valores exibidos no serviço Postgres.
 
-#### Como Copiar Valores do PostgreSQL no Railway
-
-1. No serviço PostgreSQL, vá em **"Variables"**
-2. Copie os valores de `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`
-3. No serviço da aplicação, crie as variáveis `SPRING_DATASOURCE_*` com os valores copiados
-4. Para `SPRING_DATASOURCE_URL`, monte a URL no formato: `jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE}`
-   - Substitua `${PGHOST}`, `${PGPORT}`, `${PGDATABASE}` pelos valores reais
+**Importante:** O perfil prod usa **`DB_*`**, não mais `SPRING_DATASOURCE_*`. Veja também o guia na raiz do monorepo: **`VERCEL_RAILWAY_ATUALIZADO.md`**.
 
 ### 4. Deploy
 

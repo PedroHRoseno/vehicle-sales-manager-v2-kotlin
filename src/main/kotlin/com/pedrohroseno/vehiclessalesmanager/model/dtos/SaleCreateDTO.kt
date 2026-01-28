@@ -11,5 +11,5 @@ data class VehicleReferenceDTO(
 )
 
 data class PartnerReferenceDTO(
-    val cpf: String
+    val document: String
 )

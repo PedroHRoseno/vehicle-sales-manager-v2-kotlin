@@ -11,7 +11,7 @@ data class ExchangeResponseDTO(
     val vehicleSaidaLicensePlate: String,
     val vehicleSaidaBrand: String,
     val vehicleSaidaModel: String,
-    val partnerCpf: String,
+    val partnerDocument: String,
     val partnerName: String,
     val diferencaValor: Double,
     val exchangeDate: Date,

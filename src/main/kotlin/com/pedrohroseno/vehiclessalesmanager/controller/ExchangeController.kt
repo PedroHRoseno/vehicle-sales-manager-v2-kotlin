@@ -109,7 +109,7 @@ class ExchangeController(
             vehicleSaidaLicensePlate = this.vehicleSaida.licensePlate,
             vehicleSaidaBrand = this.vehicleSaida.brand.name,
             vehicleSaidaModel = this.vehicleSaida.modelName,
-            partnerCpf = this.partner.cpf,
+            partnerDocument = this.partner.document,
             partnerName = this.partner.name,
             diferencaValor = this.diferencaValor,
             exchangeDate = this.exchangeDate,
