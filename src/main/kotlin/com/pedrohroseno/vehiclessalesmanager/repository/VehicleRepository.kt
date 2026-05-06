@@ -11,5 +11,7 @@ import org.springframework.stereotype.Repository
 interface VehicleRepository : JpaRepository<Vehicle, String> {
     fun findByLicensePlate(licensePlate: String): Vehicle?
     fun findByStatus(status: VehicleStatus, pageable: Pageable): Page<Vehicle>
+    fun findByStatus(status: VehicleStatus): List<Vehicle>
+    fun findByStatusAndPublishedTrue(status: VehicleStatus): List<Vehicle>
     fun countByStatus(status: VehicleStatus): Long
 }

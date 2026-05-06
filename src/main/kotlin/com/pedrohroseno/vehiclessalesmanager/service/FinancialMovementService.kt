@@ -29,6 +29,7 @@ class FinancialMovementService(
 
         // 1. Vendas (ENTRY)
         val sales = saleRepository.findAllByDeletedFalseOrderBySaleDateDesc(Pageable.unpaged())
+            .filter { it.status == TransactionStatus.ACTIVE }
             .filter { 
                 if (startDate != null && endDate != null) {
                     it.saleDate >= startDate && it.saleDate <= endDate
@@ -58,9 +59,12 @@ class FinancialMovementService(
         // 2. Compras (EXIT)
         val purchases = if (startDate != null && endDate != null) {
             purchaseRepository.findAllByDeletedFalseOrderByPurchaseDateDesc(Pageable.unpaged())
+                .filter { it.status == TransactionStatus.ACTIVE }
                 .filter { it.purchaseDate >= startDate && it.purchaseDate <= endDate }
         } else {
-            purchaseRepository.findAllByDeletedFalseOrderByPurchaseDateDesc(Pageable.unpaged()).toList()
+            purchaseRepository.findAllByDeletedFalseOrderByPurchaseDateDesc(Pageable.unpaged())
+                .filter { it.status == TransactionStatus.ACTIVE }
+                .toList()
         }
         
         purchases.forEach { purchase ->
@@ -83,6 +87,7 @@ class FinancialMovementService(
 
         // 3. Trocas (pode ser ENTRY ou EXIT dependendo do sinal da diferença)
         val exchanges = exchangeRepository.findAllByDeletedFalseOrderByExchangeDateDesc(Pageable.unpaged())
+            .filter { it.status == TransactionStatus.ACTIVE }
             .filter { 
                 if (startDate != null && endDate != null) {
                     it.exchangeDate >= startDate && it.exchangeDate <= endDate
@@ -144,7 +149,9 @@ class FinancialMovementService(
             storeTransactionRepository.findAllByDateRangeAndDeletedFalse(startDate, endDate, Pageable.unpaged())
         } else {
             storeTransactionRepository.findAllByDeletedFalseOrderByDateDesc(Pageable.unpaged())
-        }.toList()
+        }
+            .filter { it.status == TransactionStatus.ACTIVE }
+            .toList()
         
         storeTransactions.forEach { transaction ->
             if (type == null || transaction.type == type) {

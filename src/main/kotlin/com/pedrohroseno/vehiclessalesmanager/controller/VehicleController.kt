@@ -1,6 +1,7 @@
 package com.pedrohroseno.vehiclessalesmanager.controller
 
 import com.pedrohroseno.vehiclessalesmanager.model.dtos.VehicleCreateDTO
+import com.pedrohroseno.vehiclessalesmanager.model.dtos.VehicleCatalogUpdateDTO
 import com.pedrohroseno.vehiclessalesmanager.model.dtos.VehicleResponseDTO
 import com.pedrohroseno.vehiclessalesmanager.model.dtos.VehicleHistoryDTO
 import com.pedrohroseno.vehiclessalesmanager.service.VehicleService
@@ -41,6 +42,45 @@ class VehicleController(
     fun createVehicle(@RequestBody dto: VehicleCreateDTO): ResponseEntity<Void> {
         vehicleService.createVehicle(dto)
         return ResponseEntity.status(HttpStatus.CREATED).build()
+    }
+
+    @PutMapping
+    @Operation(summary = "Atualizar veículo", description = "Atualiza um veículo existente (inclui publicação e URLs de imagens)")
+    fun updateVehicle(@RequestBody dto: VehicleCreateDTO): ResponseEntity<Void> {
+        vehicleService.updateVehicle(dto)
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
+    }
+
+    @PatchMapping("/{licensePlate}/catalog")
+    @Operation(summary = "Atualizar vitrine pública", description = "Atualiza campos do catálogo público (published, imageUrlList, description).")
+    fun updateCatalog(
+        @PathVariable licensePlate: String,
+        @RequestBody dto: VehicleCatalogUpdateDTO
+    ): ResponseEntity<Void> {
+        vehicleService.updateCatalog(licensePlate, dto)
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
+    }
+
+    @GetMapping("/{licensePlate}")
+    @Operation(summary = "Detalhes do veículo", description = "Retorna os dados do veículo (inclui published e imageUrlList).")
+    fun getVehicle(@PathVariable licensePlate: String): ResponseEntity<VehicleResponseDTO> {
+        val vehicle = vehicleService.findByLicensePlate(licensePlate) ?: return ResponseEntity.notFound().build()
+        return ResponseEntity.ok(
+            VehicleResponseDTO(
+                licensePlate = vehicle.licensePlate,
+                brand = vehicle.brand,
+                modelName = vehicle.modelName,
+                manufactureYear = vehicle.manufactureYear,
+                modelYear = vehicle.modelYear,
+                color = vehicle.color,
+                kilometersDriven = vehicle.kilometersDriven,
+                status = vehicle.status,
+                inStock = vehicle.inStock,
+                published = vehicle.published,
+                description = vehicle.description,
+                imageUrlList = vehicle.imageUrlList.toList()
+            )
+        )
     }
 
     @GetMapping("/{licensePlate}/history")

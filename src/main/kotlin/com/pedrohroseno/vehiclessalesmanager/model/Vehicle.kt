@@ -8,6 +8,7 @@ import jakarta.persistence.*
 @Table(name = "vehicles")
 data class Vehicle(
     @Id
+    @Column(name = "license_plate")
     var licensePlate: String,
     
     @Enumerated(EnumType.STRING)
@@ -29,6 +30,20 @@ data class Vehicle(
     @Column(nullable = false)
     var kilometersDriven: Int,
     
+    @Column(nullable = false)
+    var published: Boolean = false,
+
+    @Column(nullable = true, length = 1000)
+    var description: String? = null,
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+        name = "vehicle_images",
+        joinColumns = [JoinColumn(name = "vehicle_license_plate")]
+    )
+    @Column(name = "image_url", nullable = false, length = 1000)
+    var imageUrlList: MutableList<String> = mutableListOf(),
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     var status: VehicleStatus = VehicleStatus.DISPONIVEL

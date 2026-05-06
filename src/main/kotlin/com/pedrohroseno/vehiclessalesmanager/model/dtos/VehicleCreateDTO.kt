@@ -10,5 +10,8 @@ data class VehicleCreateDTO(
     val modelYear: Int,
     val color: String,
     val kilometersDriven: Int,
-    val inStock: Boolean = true
+    val inStock: Boolean = true,
+    val published: Boolean = false,
+    val description: String? = null,
+    val imageUrlList: List<String> = emptyList()
 )

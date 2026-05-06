@@ -41,6 +41,10 @@ class VehicleService(
         return vehicleRepository.findByStatus(VehicleStatus.DISPONIVEL, pageable).map { it.toResponseDTO() }
     }
 
+    fun getPublicAvailableVehicles(): List<PublicVehicleDTO> {
+        return vehicleRepository.findByStatusAndPublishedTrue(VehicleStatus.DISPONIVEL).map { it.toPublicDTO() }
+    }
+
     fun countAvailableVehicles(): Long {
         return vehicleRepository.countByStatus(VehicleStatus.DISPONIVEL)
     }
@@ -55,8 +59,33 @@ class VehicleService(
             modelYear = dto.modelYear,
             color = dto.color,
             kilometersDriven = dto.kilometersDriven,
+            published = dto.published,
+            description = dto.description?.trim()?.takeIf { it.isNotBlank() },
+            imageUrlList = dto.imageUrlList.mapNotNull { it.trim().takeIf { s -> s.isNotBlank() } }.toMutableList(),
             status = if (dto.inStock) VehicleStatus.DISPONIVEL else VehicleStatus.VENDIDO
         )
+        return vehicleRepository.save(vehicle)
+    }
+
+    @Transactional
+    fun updateVehicle(dto: VehicleCreateDTO): Vehicle {
+        val vehicle = vehicleRepository.findByLicensePlate(dto.licensePlate)
+            ?: throw IllegalArgumentException("Veículo não encontrado: ${dto.licensePlate}")
+
+        vehicle.brand = dto.brand
+        vehicle.modelName = dto.modelName
+        vehicle.manufactureYear = dto.manufactureYear
+        vehicle.modelYear = dto.modelYear
+        vehicle.color = dto.color
+        vehicle.kilometersDriven = dto.kilometersDriven
+        vehicle.published = dto.published
+        vehicle.description = dto.description?.trim()?.takeIf { it.isNotBlank() }
+        vehicle.imageUrlList = dto.imageUrlList.mapNotNull { it.trim().takeIf { s -> s.isNotBlank() } }.toMutableList()
+        vehicle.status = if (dto.inStock) VehicleStatus.DISPONIVEL else VehicleStatus.VENDIDO
+        if (vehicle.status != VehicleStatus.DISPONIVEL && vehicle.published) {
+            vehicle.published = false
+        }
+
         return vehicleRepository.save(vehicle)
     }
 
@@ -65,7 +94,34 @@ class VehicleService(
         val vehicle = vehicleRepository.findByLicensePlate(licensePlate)
             ?: throw IllegalArgumentException("Veículo não encontrado: $licensePlate")
         vehicle.status = status
+        if (status != VehicleStatus.DISPONIVEL && vehicle.published) {
+            vehicle.published = false
+        }
         vehicleRepository.save(vehicle)
+    }
+
+    @Transactional
+    fun updateCatalog(licensePlate: String, dto: VehicleCatalogUpdateDTO): Vehicle {
+        val vehicle = vehicleRepository.findByLicensePlate(licensePlate)
+            ?: throw IllegalArgumentException("Veículo não encontrado: $licensePlate")
+
+        if (dto.published != null) {
+            vehicle.published = dto.published
+        }
+        if (dto.description != null) {
+            vehicle.description = dto.description.trim().takeIf { it.isNotBlank() }
+        }
+        if (dto.imageUrlList != null) {
+            vehicle.imageUrlList = dto.imageUrlList
+                .mapNotNull { it.trim().takeIf { s -> s.isNotBlank() } }
+                .toMutableList()
+        }
+
+        if (vehicle.status != VehicleStatus.DISPONIVEL && vehicle.published) {
+            vehicle.published = false
+        }
+
+        return vehicleRepository.save(vehicle)
     }
 
     @Transactional
@@ -160,7 +216,22 @@ class VehicleService(
             color = this.color,
             kilometersDriven = this.kilometersDriven,
             status = this.status,
-            inStock = this.inStock
+            inStock = this.inStock,
+            published = this.published,
+            description = this.description,
+            imageUrlList = this.imageUrlList.toList()
+        )
+    }
+
+    private fun Vehicle.toPublicDTO(): PublicVehicleDTO {
+        return PublicVehicleDTO(
+            brand = this.brand.name,
+            model = this.modelName,
+            year = this.modelYear,
+            color = this.color,
+            kilometersDriven = this.kilometersDriven,
+            imageUrlList = this.imageUrlList.toList(),
+            description = this.description
         )
     }
 }

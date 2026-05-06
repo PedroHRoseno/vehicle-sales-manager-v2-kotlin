@@ -12,5 +12,8 @@ data class VehicleResponseDTO(
     val color: String,
     val kilometersDriven: Int,
     val status: VehicleStatus,
-    val inStock: Boolean
+    val inStock: Boolean,
+    val published: Boolean,
+    val description: String?,
+    val imageUrlList: List<String>
 )

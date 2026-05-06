@@ -1,8 +1,10 @@
 # Configuração mestre — perfis: local (dev) | prod (Railway/Vercel)
 spring:
   flyway:
+    enabled: true
     baseline-on-migrate: true
     baseline-version: "0"
+    locations: classpath:db/migration
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}
   application:
@@ -20,7 +22,7 @@ spring:
             non_contextual_creation: true
   web:
     cors:
-      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:*}
       allowed-methods: GET,POST,PUT,DELETE,OPTIONS
       allowed-headers: "*"
 

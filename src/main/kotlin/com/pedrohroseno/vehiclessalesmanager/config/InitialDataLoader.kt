@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.CommandLineRunner
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Component
+import org.slf4j.LoggerFactory
 
 @Component
 class InitialDataLoader(
@@ -15,6 +16,8 @@ class InitialDataLoader(
     @Value("\${ADMIN_USERNAME:}") private val adminUsername: String,
     @Value("\${ADMIN_PASSWORD:}") private val adminPassword: String
 ) : CommandLineRunner {
+
+    private val log = LoggerFactory.getLogger(InitialDataLoader::class.java)
 
     override fun run(vararg args: String?) {
         if (userRepository.count() == 0L) {
@@ -27,9 +30,9 @@ class InitialDataLoader(
             )
             userRepository.save(adminUser)
             if (adminUsername.isNotBlank() && adminPassword.isNotBlank()) {
-                println("Usuário administrador criado a partir de ADMIN_USERNAME / ADMIN_PASSWORD")
+                log.info("Usuário administrador criado a partir de variáveis de ambiente.")
             } else {
-                println("Usuário administrador padrão criado: admin / admin123 (defina ADMIN_USERNAME e ADMIN_PASSWORD para usar credenciais próprias)")
+                log.warn("Usuário administrador padrão criado. Defina ADMIN_USERNAME e ADMIN_PASSWORD em produção.")
             }
         }
     }
