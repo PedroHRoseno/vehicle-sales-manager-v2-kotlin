@@ -16,6 +16,7 @@ class S3Service(
 ) {
     fun uploadFile(file: MultipartFile): String {
         require(!file.isEmpty) { "Arquivo vazio" }
+        require(awsBucketName.isNotBlank()) { "AWS_BUCKET_NAME não configurado" }
 
         val originalName = file.originalFilename?.trim().orEmpty().ifBlank { "file" }
         val safeOriginal = originalName.substringAfterLast("\\").substringAfterLast("/")

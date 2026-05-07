@@ -5,6 +5,10 @@ spring:
     username: ${DB_USER}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+  servlet:
+    multipart:
+      max-file-size: ${SPRING_MULTIPART_MAX_FILE_SIZE:10MB}
+      max-request-size: ${SPRING_MULTIPART_MAX_REQUEST_SIZE:10MB}
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
