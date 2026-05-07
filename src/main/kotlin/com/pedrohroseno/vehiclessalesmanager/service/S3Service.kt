@@ -5,7 +5,6 @@ import org.springframework.web.multipart.MultipartFile
 import software.amazon.awssdk.core.sync.RequestBody
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.GetUrlRequest
-import software.amazon.awssdk.services.s3.model.ObjectCannedACL
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import java.util.UUID
 
@@ -25,7 +24,9 @@ class S3Service(
         val putRequest = PutObjectRequest.builder()
             .bucket(awsBucketName)
             .key(key)
-            .acl(ObjectCannedACL.PUBLIC_READ)
+            // Não usar ACL: buckets com "Object Ownership = Bucket owner enforced"
+            // rejeitam qualquer ACL ("The bucket does not allow ACLs").
+            // Para URL pública, configure policy pública no bucket/prefixo (ou use CloudFront).
             .contentType(file.contentType ?: "application/octet-stream")
             .build()
 
