@@ -33,8 +33,21 @@ class VehicleService(
         return vehicle?.status == VehicleStatus.DISPONIVEL
     }
 
-    fun getAllVehicles(pageable: Pageable): Page<VehicleResponseDTO> {
-        return vehicleRepository.findAll(pageable).map { it.toResponseDTO() }
+    fun getAllVehicles(
+        pageable: Pageable,
+        search: String? = null,
+        inStock: Boolean? = null,
+        published: Boolean? = null
+    ): Page<VehicleResponseDTO> {
+        val searchTerm = search?.trim()?.takeIf { it.isNotEmpty() }
+        val status = when (inStock) {
+            true -> VehicleStatus.DISPONIVEL
+            false -> VehicleStatus.VENDIDO
+            null -> null
+        }
+        return vehicleRepository
+            .findFiltered(searchTerm, status, published, pageable)
+            .map { it.toResponseDTO() }
     }
 
     fun getAvailableVehicles(pageable: Pageable): Page<VehicleResponseDTO> {

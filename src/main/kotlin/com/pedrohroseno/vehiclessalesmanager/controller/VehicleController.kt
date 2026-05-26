@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -22,11 +23,20 @@ class VehicleController(
     private val vehicleService: VehicleService
 ) {
     @GetMapping
-    @Operation(summary = "Listar todos os veículos", description = "Retorna uma lista paginada de todos os veículos")
+    @Operation(
+        summary = "Listar todos os veículos",
+        description = "Retorna uma lista paginada de todos os veículos. Suporta busca por marca, modelo ou placa via parâmetro 'search'."
+    )
     fun getAllVehicles(
-        @PageableDefault(size = 20, sort = ["licensePlate"]) pageable: Pageable
+        @Parameter(description = "Termo de busca (marca, modelo ou placa)", required = false)
+        @RequestParam(required = false) search: String?,
+        @Parameter(description = "Filtrar por estoque (true = disponível, false = vendido)", required = false)
+        @RequestParam(required = false) inStock: Boolean?,
+        @Parameter(description = "Filtrar por publicação no catálogo", required = false)
+        @RequestParam(required = false) published: Boolean?,
+        @PageableDefault(size = 20, sort = ["createdAt"], direction = Sort.Direction.DESC) pageable: Pageable
     ): ResponseEntity<Page<VehicleResponseDTO>> {
-        return ResponseEntity.ok(vehicleService.getAllVehicles(pageable))
+        return ResponseEntity.ok(vehicleService.getAllVehicles(pageable, search, inStock, published))
     }
 
     @GetMapping("/available")

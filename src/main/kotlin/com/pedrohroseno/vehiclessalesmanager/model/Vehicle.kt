@@ -3,6 +3,8 @@ package com.pedrohroseno.vehiclessalesmanager.model
 import com.pedrohroseno.vehiclessalesmanager.model.enums.VehicleBrand
 import com.pedrohroseno.vehiclessalesmanager.model.enums.VehicleStatus
 import jakarta.persistence.*
+import org.hibernate.annotations.CreationTimestamp
+import java.time.LocalDateTime
 
 @Entity
 @Table(name = "vehicles")
@@ -46,7 +48,11 @@ data class Vehicle(
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    var status: VehicleStatus = VehicleStatus.DISPONIVEL
+    var status: VehicleStatus = VehicleStatus.DISPONIVEL,
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    @CreationTimestamp
+    var createdAt: LocalDateTime? = null
 ) {
     // Propriedade computada para compatibilidade com front-end
     val inStock: Boolean
