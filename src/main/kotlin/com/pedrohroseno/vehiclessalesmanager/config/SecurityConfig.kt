@@ -46,7 +46,7 @@ class SecurityConfig(
                 auth
                     // Libera preflight requests para qualquer rota
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                    .requestMatchers("/api/auth/login").permitAll()
+                    .requestMatchers("/api/auth/**").permitAll()
                     .requestMatchers("/api/public/**").permitAll()
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                     .anyRequest().authenticated()

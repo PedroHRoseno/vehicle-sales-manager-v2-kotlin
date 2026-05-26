@@ -5,6 +5,8 @@ import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
 import javax.crypto.SecretKey
 import java.util.*
 
@@ -16,8 +18,10 @@ class JwtService {
     @Value("\${jwt.expiration:86400000}") // 24 horas em milissegundos
     private var expiration: Long = 86400000
 
+    /** Normaliza o secret para 256 bits (exigência HS256), evitando falha com JWT_SECRET curto no Railway. */
     private fun getSigningKey(): SecretKey {
-        val keyBytes = secretKey.toByteArray()
+        val keyBytes = MessageDigest.getInstance("SHA-256")
+            .digest(secretKey.toByteArray(StandardCharsets.UTF_8))
         return Keys.hmacShaKeyFor(keyBytes)
     }
 
