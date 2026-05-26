@@ -15,5 +15,11 @@ spring:
       ddl-auto: validate
     show-sql: false
 
+# Em produção exigimos JWT_SECRET e CORS_ALLOWED_ORIGINS definidos via ENV.
+# Sem fallback: se ausentes, a aplicação falha no startup (fail-fast).
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION:86400000}
+
 server:
   forward-headers-strategy: FRAMEWORK
