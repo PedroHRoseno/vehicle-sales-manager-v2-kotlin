@@ -17,7 +17,6 @@ import java.util.Date
 @RestController
 @RequestMapping("/financial/movements")
 @Tag(name = "Movimentações Financeiras", description = "API para visualização unificada de todas as movimentações financeiras")
-@CrossOrigin(origins = ["http://localhost:3000"])
 class FinancialMovementController(
     private val financialMovementService: FinancialMovementService
 ) {

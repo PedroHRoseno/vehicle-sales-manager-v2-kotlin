@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/exchanges")
 @Tag(name = "Trocas", description = "API para gerenciamento de trocas de veículos")
-@CrossOrigin(origins = ["http://localhost:3000"])
 class ExchangeController(
     private val exchangeService: ExchangeService
 ) {

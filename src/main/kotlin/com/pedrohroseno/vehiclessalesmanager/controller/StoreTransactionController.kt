@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/store-transactions")
 @Tag(name = "Transações da Loja", description = "API para gerenciamento de transações financeiras gerais da loja")
-@CrossOrigin(origins = ["http://localhost:3000"])
 class StoreTransactionController(
     private val storeTransactionService: StoreTransactionService
 ) {

@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.cors.CorsConfiguration
+import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 import org.springframework.web.filter.CorsFilter
 
@@ -13,7 +14,7 @@ class CorsConfig {
     private lateinit var allowedOrigins: String
 
     @Bean
-    fun corsFilter(): CorsFilter {
+    fun corsConfigurationSource(): CorsConfigurationSource {
         val source = UrlBasedCorsConfigurationSource()
         val config = CorsConfiguration()
         
@@ -43,7 +44,7 @@ class CorsConfig {
         config.addAllowedMethod("OPTIONS")
         config.addAllowedMethod("PATCH")
         
-        // Permitir todos os headers (incluindo headers do Swagger)
+        // Headers necessários (inclui Authorization do JWT)
         config.addAllowedHeader("*")
         
         // Headers expostos na resposta
@@ -67,6 +68,15 @@ class CorsConfig {
         source.registerCorsConfiguration("/swagger-ui/**", swaggerConfig)
         source.registerCorsConfiguration("/swagger-ui.html", swaggerConfig)
         
-        return CorsFilter(source)
+        return source
+    }
+
+    /**
+     * Mantém o CorsFilter explícito também (útil fora do Spring Security),
+     * mas a fonte acima é a que o `http.cors {}` do SecurityFilterChain consome.
+     */
+    @Bean
+    fun corsFilter(corsConfigurationSource: CorsConfigurationSource): CorsFilter {
+        return CorsFilter(corsConfigurationSource)
     }
 }

@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/vehicles/{licensePlate}/costs")
 @Tag(name = "Custos de Veículos", description = "API para gerenciamento de custos adicionais de veículos")
-@CrossOrigin(origins = ["http://localhost:3000"])
 class VehicleCostController(
     private val vehicleCostService: VehicleCostService
 ) {
