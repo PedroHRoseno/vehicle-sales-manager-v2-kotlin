@@ -8,7 +8,9 @@ import com.pedrohroseno.vehiclessalesmanager.repository.PurchaseRepository
 import com.pedrohroseno.vehiclessalesmanager.repository.SaleRepository
 import com.pedrohroseno.vehiclessalesmanager.repository.VehicleRepository
 import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -45,9 +47,23 @@ class VehicleService(
             false -> VehicleStatus.VENDIDO
             null -> null
         }
+        val effectivePageable = resolveVehiclePageable(pageable)
         return vehicleRepository
-            .findFiltered(searchTerm, status, published, pageable)
+            .findFiltered(searchTerm, status, published, effectivePageable)
             .map { it.toResponseDTO() }
+    }
+
+    /** Garante ordenação por createdAt (mais recentes primeiro), com fallback seguro. */
+    private fun resolveVehiclePageable(pageable: Pageable): Pageable {
+        val sort = pageable.sort
+        if (sort.isSorted) {
+            return pageable
+        }
+        return PageRequest.of(
+            pageable.pageNumber,
+            pageable.pageSize,
+            Sort.by(Sort.Direction.DESC, "createdAt")
+        )
     }
 
     fun getAvailableVehicles(pageable: Pageable): Page<VehicleResponseDTO> {

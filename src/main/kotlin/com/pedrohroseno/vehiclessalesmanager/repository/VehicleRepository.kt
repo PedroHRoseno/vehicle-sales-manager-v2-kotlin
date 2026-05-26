@@ -20,20 +20,20 @@ interface VehicleRepository : JpaRepository<Vehicle, String> {
     @Query(
         value = """
             SELECT v FROM Vehicle v WHERE
-            (:search IS NULL OR (
+            (:search IS NULL OR :search = '' OR (
                 LOWER(v.licensePlate) LIKE LOWER(CONCAT('%', :search, '%')) OR
                 LOWER(v.modelName) LIKE LOWER(CONCAT('%', :search, '%')) OR
-                LOWER(CONCAT('', v.brand)) LIKE LOWER(CONCAT('%', :search, '%'))
+                LOWER(CAST(v.brand AS string)) LIKE LOWER(CONCAT('%', :search, '%'))
             ))
             AND (:status IS NULL OR v.status = :status)
             AND (:published IS NULL OR v.published = :published)
         """,
         countQuery = """
             SELECT COUNT(v) FROM Vehicle v WHERE
-            (:search IS NULL OR (
+            (:search IS NULL OR :search = '' OR (
                 LOWER(v.licensePlate) LIKE LOWER(CONCAT('%', :search, '%')) OR
                 LOWER(v.modelName) LIKE LOWER(CONCAT('%', :search, '%')) OR
-                LOWER(CONCAT('', v.brand)) LIKE LOWER(CONCAT('%', :search, '%'))
+                LOWER(CAST(v.brand AS string)) LIKE LOWER(CONCAT('%', :search, '%'))
             ))
             AND (:status IS NULL OR v.status = :status)
             AND (:published IS NULL OR v.published = :published)
