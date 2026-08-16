@@ -35,8 +35,8 @@ class ExchangeService(
                 ?: throw IllegalArgumentException("Parceiro não encontrado com documento: ${dto.customerDocument}. Certifique-se de que o parceiro está cadastrado no sistema.")
         } else {
             // Buscar parceiro através da última venda do veículo de entrada
-            val lastSale = saleRepository.findAll()
-                .filter { it.vehicle.licensePlate == dto.veiculoEntradaLicensePlate }
+            val lastSale = saleRepository
+                .findAllByVehicleLicensePlateAndDeletedFalse(dto.veiculoEntradaLicensePlate)
                 .maxByOrNull { it.saleDate }
             
             lastSale?.partner

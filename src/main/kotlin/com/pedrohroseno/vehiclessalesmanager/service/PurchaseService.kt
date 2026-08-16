@@ -1,7 +1,6 @@
 package com.pedrohroseno.vehiclessalesmanager.service
 
 import com.pedrohroseno.vehiclessalesmanager.model.Purchase
-import com.pedrohroseno.vehiclessalesmanager.model.Vehicle
 import com.pedrohroseno.vehiclessalesmanager.model.dtos.PurchaseCreateDTO
 import com.pedrohroseno.vehiclessalesmanager.model.dtos.PurchaseResponseDTO
 import com.pedrohroseno.vehiclessalesmanager.model.dtos.PurchaseUpdateDTO
@@ -9,7 +8,6 @@ import com.pedrohroseno.vehiclessalesmanager.model.dtos.VehicleCreateDTO
 import com.pedrohroseno.vehiclessalesmanager.model.enums.ActionType
 import com.pedrohroseno.vehiclessalesmanager.model.enums.TransactionStatus
 import com.pedrohroseno.vehiclessalesmanager.model.enums.TransactionType
-import com.pedrohroseno.vehiclessalesmanager.model.enums.VehicleStatus
 import com.pedrohroseno.vehiclessalesmanager.repository.PurchaseRepository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -23,7 +21,8 @@ class PurchaseService(
     private val purchaseRepository: PurchaseRepository,
     private val partnerService: PartnerService,
     private val vehicleService: VehicleService,
-    private val transactionHistoryService: TransactionHistoryService
+    private val transactionHistoryService: TransactionHistoryService,
+    private val purchaseStockEffect: PurchaseStockEffect
 ) {
     fun getAllPurchases(pageable: Pageable, search: String? = null): Page<PurchaseResponseDTO> {
         return if (search.isNullOrBlank()) {
@@ -40,14 +39,10 @@ class PurchaseService(
 
         // Buscar veículo - deve existir (regra: na compra, o veículo é cadastrado automaticamente)
         // Se não existir, significa que precisa ser cadastrado primeiro via endpoint de veículos
-        val existingVehicle = vehicleService.findByLicensePlate(dto.vehicle.licensePlate)
+        val vehicle = vehicleService.findByLicensePlate(dto.vehicle.licensePlate)
             ?: throw IllegalArgumentException("Veículo não encontrado: ${dto.vehicle.licensePlate}. Cadastre o veículo primeiro.")
 
-        // Regra de negócio: Sempre que uma "Compra" for registrada, o sistema deve cadastrar 
-        // automaticamente o veículo no estoque com o status DISPONIVEL
-        // Se o veículo já existe, apenas atualiza o status para DISPONIVEL
-        existingVehicle.status = VehicleStatus.DISPONIVEL
-        val vehicle = vehicleService.saveVehicle(existingVehicle)
+        purchaseStockEffect.applyOnCreate(vehicle.licensePlate)
 
         // Parse da data
         val dateFormat = SimpleDateFormat("yyyy-MM-dd")
@@ -66,7 +61,7 @@ class PurchaseService(
         )
 
         val savedPurchase = purchaseRepository.save(purchase)
-        
+
         // Log histórico
         transactionHistoryService.logTransaction(
             transactionType = TransactionType.PURCHASE,
@@ -89,10 +84,10 @@ class PurchaseService(
         val partner = partnerService.findByDocument(dto.customer.document)
             ?: throw IllegalArgumentException("Parceiro não encontrado. Cadastre o parceiro primeiro.")
 
-        // Criar veículo com status DISPONIVEL (regra de negócio)
         val vehicle = vehicleService.createVehicle(
-            vehicleDto.copy(inStock = true) // Garante que está disponível
+            vehicleDto.copy(inStock = true)
         )
+        purchaseStockEffect.applyOnCreate(vehicle.licensePlate)
 
         // Parse da data
         val dateFormat = SimpleDateFormat("yyyy-MM-dd")
@@ -111,7 +106,7 @@ class PurchaseService(
         )
 
         val savedPurchase = purchaseRepository.save(purchase)
-        
+
         // Log histórico
         transactionHistoryService.logTransaction(
             transactionType = TransactionType.PURCHASE,
@@ -120,7 +115,7 @@ class PurchaseService(
             description = "Compra criada: R$ ${dto.purchasePrice} - Veículo: ${vehicle.licensePlate}",
             performedBy = null
         )
-        
+
         return savedPurchase
     }
 
@@ -188,10 +183,9 @@ class PurchaseService(
         
         purchase.status = TransactionStatus.CANCELLED
         val cancelledPurchase = purchaseRepository.save(purchase)
-        
-        // Marcar veículo como INACTIVE quando compra é cancelada
-        vehicleService.updateVehicleStatus(purchase.vehicle.licensePlate, VehicleStatus.INACTIVE)
-        
+
+        purchaseStockEffect.applyOnCancel(purchase.vehicle.licensePlate)
+
         // Log histórico
         transactionHistoryService.logTransaction(
             transactionType = TransactionType.PURCHASE,

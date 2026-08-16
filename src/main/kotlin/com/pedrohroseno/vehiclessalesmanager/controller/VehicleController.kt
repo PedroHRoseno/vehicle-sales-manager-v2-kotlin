@@ -4,6 +4,7 @@ import com.pedrohroseno.vehiclessalesmanager.model.dtos.VehicleCreateDTO
 import com.pedrohroseno.vehiclessalesmanager.model.dtos.VehicleCatalogUpdateDTO
 import com.pedrohroseno.vehiclessalesmanager.model.dtos.VehicleResponseDTO
 import com.pedrohroseno.vehiclessalesmanager.model.dtos.VehicleHistoryDTO
+import com.pedrohroseno.vehiclessalesmanager.service.VehicleHistoryService
 import com.pedrohroseno.vehiclessalesmanager.service.VehicleService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -20,7 +21,8 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/vehicles")
 @Tag(name = "Veículos", description = "API para gerenciamento de veículos")
 class VehicleController(
-    private val vehicleService: VehicleService
+    private val vehicleService: VehicleService,
+    private val vehicleHistoryService: VehicleHistoryService
 ) {
     @GetMapping
     @Operation(
@@ -103,7 +105,7 @@ class VehicleController(
         @PathVariable licensePlate: String
     ): ResponseEntity<VehicleHistoryDTO> {
         return try {
-            val history = vehicleService.getVehicleHistory(licensePlate)
+            val history = vehicleHistoryService.getVehicleHistory(licensePlate)
             ResponseEntity.ok(history)
         } catch (e: IllegalArgumentException) {
             ResponseEntity.status(HttpStatus.NOT_FOUND).build()

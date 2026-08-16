@@ -7,6 +7,8 @@ import com.pedrohroseno.vehiclessalesmanager.repository.ExchangeRepository
 import com.pedrohroseno.vehiclessalesmanager.repository.PurchaseRepository
 import com.pedrohroseno.vehiclessalesmanager.repository.SaleRepository
 import com.pedrohroseno.vehiclessalesmanager.repository.VehicleRepository
+import com.pedrohroseno.vehiclessalesmanager.service.extensions.toPublicDTO
+import com.pedrohroseno.vehiclessalesmanager.service.extensions.toResponseDTO
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
@@ -20,7 +22,6 @@ class VehicleService(
     private val purchaseRepository: PurchaseRepository,
     private val saleRepository: SaleRepository,
     private val exchangeRepository: ExchangeRepository,
-    private val vehicleCostService: VehicleCostService
 ) {
     fun findByLicensePlate(licensePlate: String): Vehicle? {
         return vehicleRepository.findByLicensePlate(licensePlate)
@@ -158,63 +159,6 @@ class VehicleService(
         return vehicleRepository.save(vehicle)
     }
 
-    fun getVehicleHistory(licensePlate: String): VehicleHistoryDTO {
-        val vehicle = vehicleRepository.findByLicensePlate(licensePlate)
-            ?: throw IllegalArgumentException("Veículo não encontrado: $licensePlate")
-        
-        // Buscar todas as transações relacionadas (incluindo soft-deleted para histórico completo)
-        val purchases = purchaseRepository.findAllByVehicleLicensePlateAndDeletedFalse(licensePlate)
-            .map { purchase ->
-                PurchaseHistoryItem(
-                    id = purchase.id ?: throw IllegalStateException("Purchase ID não pode ser nulo"),
-                    purchaseDate = purchase.purchaseDate,
-                    purchasePrice = purchase.purchasePrice,
-                    partnerDocument = purchase.partner.document,
-                    partnerName = purchase.partner.name,
-                    status = purchase.status
-                )
-            }
-        
-        val sales = saleRepository.findAllByVehicleLicensePlateAndDeletedFalse(licensePlate)
-            .map { sale ->
-                SaleHistoryItem(
-                    id = sale.id ?: throw IllegalStateException("Sale ID não pode ser nulo"),
-                    saleDate = sale.saleDate,
-                    salePrice = sale.salePrice,
-                    partnerDocument = sale.partner.document,
-                    partnerName = sale.partner.name,
-                    status = sale.status
-                )
-            }
-        
-        val exchanges = exchangeRepository.findAllByVehicleLicensePlateAndDeletedFalse(licensePlate)
-            .map { exchange ->
-                val isIncomingVehicle = exchange.vehicleEntrada.licensePlate == licensePlate
-                ExchangeHistoryItem(
-                    id = exchange.id ?: throw IllegalStateException("Exchange ID não pode ser nulo"),
-                    exchangeDate = exchange.exchangeDate,
-                    diferencaValor = exchange.diferencaValor,
-                    partnerDocument = exchange.partner.document,
-                    partnerName = exchange.partner.name,
-                    isIncomingVehicle = isIncomingVehicle,
-                    status = exchange.status
-                )
-            }
-        
-        // Buscar custos adicionais do veículo
-        val costs = vehicleCostService.getCostsByVehicle(licensePlate)
-        val totalCosts = vehicleCostService.getTotalCostsByVehicle(licensePlate)
-        
-        return VehicleHistoryDTO(
-            vehicle = vehicle.toResponseDTO(),
-            purchases = purchases,
-            sales = sales,
-            exchanges = exchanges,
-            costs = costs,
-            totalCosts = totalCosts
-        )
-    }
-
     @Transactional
     fun deleteVehicle(licensePlate: String) {
         val vehicle = vehicleRepository.findByLicensePlate(licensePlate)
@@ -233,34 +177,5 @@ class VehicleService(
         }
         
         vehicleRepository.delete(vehicle)
-    }
-
-    private fun Vehicle.toResponseDTO(): VehicleResponseDTO {
-        return VehicleResponseDTO(
-            licensePlate = this.licensePlate,
-            brand = this.brand,
-            modelName = this.modelName,
-            manufactureYear = this.manufactureYear,
-            modelYear = this.modelYear,
-            color = this.color,
-            kilometersDriven = this.kilometersDriven,
-            status = this.status,
-            inStock = this.inStock,
-            published = this.published,
-            description = this.description,
-            imageUrlList = this.imageUrlList.toList()
-        )
-    }
-
-    private fun Vehicle.toPublicDTO(): PublicVehicleDTO {
-        return PublicVehicleDTO(
-            brand = this.brand.name,
-            model = this.modelName,
-            year = this.modelYear,
-            color = this.color,
-            kilometersDriven = this.kilometersDriven,
-            imageUrlList = this.imageUrlList.toList(),
-            description = this.description
-        )
     }
 }

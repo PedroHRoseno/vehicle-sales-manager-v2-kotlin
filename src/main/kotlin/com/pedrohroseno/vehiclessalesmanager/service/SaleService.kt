@@ -7,7 +7,6 @@ import com.pedrohroseno.vehiclessalesmanager.model.dtos.SaleUpdateDTO
 import com.pedrohroseno.vehiclessalesmanager.model.enums.ActionType
 import com.pedrohroseno.vehiclessalesmanager.model.enums.TransactionStatus
 import com.pedrohroseno.vehiclessalesmanager.model.enums.TransactionType
-import com.pedrohroseno.vehiclessalesmanager.model.enums.VehicleStatus
 import com.pedrohroseno.vehiclessalesmanager.repository.SaleRepository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -20,7 +19,8 @@ class SaleService(
     private val saleRepository: SaleRepository,
     private val partnerService: PartnerService,
     private val vehicleService: VehicleService,
-    private val transactionHistoryService: TransactionHistoryService
+    private val transactionHistoryService: TransactionHistoryService,
+    private val saleStockEffect: SaleStockEffect
 ) {
     fun getAllSales(pageable: Pageable, search: String? = null): Page<SaleResponseDTO> {
         return if (search.isNullOrBlank()) {
@@ -55,8 +55,7 @@ class SaleService(
 
         val savedSale = saleRepository.save(sale)
 
-        // Atualizar status do veículo para VENDIDO (regra de negócio)
-        vehicleService.updateVehicleStatus(dto.vehicle.licensePlate, VehicleStatus.VENDIDO)
+        saleStockEffect.applyOnCreate(dto.vehicle.licensePlate)
 
         // Log histórico
         transactionHistoryService.logTransaction(
@@ -134,10 +133,9 @@ class SaleService(
         
         sale.status = TransactionStatus.CANCELLED
         val cancelledSale = saleRepository.save(sale)
-        
-        // Reverter status do veículo para DISPONIVEL
-        vehicleService.updateVehicleStatus(sale.vehicle.licensePlate, VehicleStatus.DISPONIVEL)
-        
+
+        saleStockEffect.applyOnCancel(sale.vehicle.licensePlate)
+
         // Log histórico
         transactionHistoryService.logTransaction(
             transactionType = TransactionType.SALE,
