@@ -2,6 +2,7 @@ package com.pedrohroseno.vehiclessalesmanager.service
 
 import com.pedrohroseno.vehiclessalesmanager.model.Vehicle
 import com.pedrohroseno.vehiclessalesmanager.model.dtos.*
+import com.pedrohroseno.vehiclessalesmanager.model.enums.VehicleBrand
 import com.pedrohroseno.vehiclessalesmanager.model.enums.VehicleStatus
 import com.pedrohroseno.vehiclessalesmanager.repository.ExchangeRepository
 import com.pedrohroseno.vehiclessalesmanager.repository.PurchaseRepository
@@ -71,8 +72,27 @@ class VehicleService(
         return vehicleRepository.findByStatus(VehicleStatus.DISPONIVEL, pageable).map { it.toResponseDTO() }
     }
 
-    fun getPublicAvailableVehicles(): List<PublicVehicleDTO> {
-        return vehicleRepository.findByStatusAndPublishedTrue(VehicleStatus.DISPONIVEL).map { it.toPublicDTO() }
+    fun getPublicAvailableVehicles(
+        brand: String? = null,
+        maxKm: Int? = null,
+        yearMin: Int? = null,
+    ): List<PublicVehicleDTO> {
+        val parsedBrand = parsePublicBrand(brand)
+        if (!brand.isNullOrBlank() && parsedBrand == null) {
+            return emptyList()
+        }
+        return vehicleRepository
+            .findPublicCatalog(VehicleStatus.DISPONIVEL, parsedBrand, maxKm, yearMin)
+            .map { it.toPublicDTO() }
+    }
+
+    private fun parsePublicBrand(raw: String?): VehicleBrand? {
+        if (raw.isNullOrBlank()) return null
+        val normalized = raw.trim().uppercase().replace(' ', '_').replace('-', '_')
+        return VehicleBrand.entries.find { it.name.equals(normalized, ignoreCase = true) }
+            ?: VehicleBrand.entries.find {
+                it.name.replace("_", "").equals(normalized.replace("_", ""), ignoreCase = true)
+            }
     }
 
     fun countAvailableVehicles(): Long {

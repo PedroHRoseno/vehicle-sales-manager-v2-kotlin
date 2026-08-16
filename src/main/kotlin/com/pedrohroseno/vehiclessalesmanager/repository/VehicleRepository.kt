@@ -1,6 +1,7 @@
 package com.pedrohroseno.vehiclessalesmanager.repository
 
 import com.pedrohroseno.vehiclessalesmanager.model.Vehicle
+import com.pedrohroseno.vehiclessalesmanager.model.enums.VehicleBrand
 import com.pedrohroseno.vehiclessalesmanager.model.enums.VehicleStatus
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -16,6 +17,22 @@ interface VehicleRepository : JpaRepository<Vehicle, String> {
     fun findByStatus(status: VehicleStatus): List<Vehicle>
     fun findByStatusAndPublishedTrue(status: VehicleStatus): List<Vehicle>
     fun countByStatus(status: VehicleStatus): Long
+
+    @Query(
+        """
+            SELECT v FROM Vehicle v WHERE
+            v.status = :status AND v.published = true
+            AND (:brand IS NULL OR v.brand = :brand)
+            AND (:maxKm IS NULL OR v.kilometersDriven <= :maxKm)
+            AND (:yearMin IS NULL OR v.modelYear >= :yearMin)
+        """
+    )
+    fun findPublicCatalog(
+        @Param("status") status: VehicleStatus,
+        @Param("brand") brand: VehicleBrand?,
+        @Param("maxKm") maxKm: Int?,
+        @Param("yearMin") yearMin: Int?
+    ): List<Vehicle>
 
     @Query(
         value = """
